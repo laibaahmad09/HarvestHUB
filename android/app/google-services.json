@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "307586883658",
+    "project_id": "tasting-cli-59e68",
+    "storage_bucket": "tasting-cli-59e68.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:307586883658:android:d407cc8b9fab0f5deec6b3",
+        "android_client_info": {
+          "package_name": "com.example.first_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "307586883658-example.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoYlYEdAM1qMeuBlydF4uCmjrIPMHoG3k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "307586883658-example.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
