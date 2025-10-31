@@ -6,11 +6,11 @@ import '../ui/SelerDashBord/seller_dash_bord.dart';
 import '../ui/SelerDashBord/profile_screen.dart';
 import '../ui/SelerDashBord/inventory.dart';
 import '../ui/SelerDashBord/find_labour.dart';
-import '../ui/SelerDashBord/rent_machinery.dart';
-import '../ui/SelerDashBord/SellProductScreen/sell_product.dart';
-import '../ui/SelerDashBord/SellProductScreen/add_product.dart';
-import '../ui/SelerDashBord/BuyerDashbord/buyer_rent_machinery.dart';
-import '../ui/SelerDashBord/BuyerDashbord/add_machinory.dart';
+import '../ui/SelerDashBord/rent_machinery/rent_machinery_screen.dart';
+import '../ui/SelerDashBord/sell_product/sell_product_screen.dart';
+import '../ui/SelerDashBord/add_products/add_product.dart';
+import '../ui/BuyerDashbord/buyer_rent_machinery.dart';
+import '../ui/SelerDashBord/add_products/add_machinory.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -27,19 +27,19 @@ class AppRoutes {
   static const String addMachinery = '/add-machinery';
 
   static Map<String, WidgetBuilder> get routes => {
-    splash: (context) => SplashScreen(),
-    login: (context) => LoginPage(),
-    signup: (context) => SignupPage(),
-    sellerDashboard: (context) => SellerDashboard(),
-    profile: (context) => ProfileScreen(),
-    inventory: (context) => InventoryDashboard(),
-    findLabour: (context) => HireLabourDashboard(),
-    rentMachinery: (context) => RentDashboard(),
-    sellProduct: (context) => SellDashboard(),
-    buyerRentMachinery: (context) => BuyerRentDashboard(),
-    addProduct: (context) => AddProduct(),
-    addMachinery: (context) => AddMachinery(),
-  };
+        splash: (context) => SplashScreen(),
+        login: (context) => LoginPage(),
+        signup: (context) => SignupPage(),
+        sellerDashboard: (context) => SellerDashboard(),
+        profile: (context) => ProfileScreen(),
+        inventory: (context) => InventoryDashboard(),
+        findLabour: (context) => HireLabourDashboard(),
+        rentMachinery: (context) => RentDashboard(),
+        sellProduct: (context) => SellDashboard(),
+        buyerRentMachinery: (context) => BuyerRentDashboard(),
+        addProduct: (context) => AddProduct(),
+        addMachinery: (context) => AddMachinery(),
+      };
 
   static void navigateTo(BuildContext context, String routeName) {
     Navigator.pushNamed(context, routeName);

@@ -2,11 +2,9 @@ import 'package:first_project/approutes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'find_labour.dart';
 import 'inventory.dart';
-import 'rent_machinery.dart';
-import 'SellProductScreen/sell_product.dart';
+import 'rent_machinery/rent_machinery_screen.dart';
+import 'sell_product/sell_product_screen.dart';
 import 'Helper/custom_drawer.dart';
-
-
 
 class SellerDashboard extends StatefulWidget {
   const SellerDashboard({super.key});
@@ -15,7 +13,8 @@ class SellerDashboard extends StatefulWidget {
   State<SellerDashboard> createState() => _SellerDashboardState();
 }
 
-class _SellerDashboardState extends State<SellerDashboard> with TickerProviderStateMixin {
+class _SellerDashboardState extends State<SellerDashboard>
+    with TickerProviderStateMixin {
   int _currentIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -51,18 +50,23 @@ class _SellerDashboardState extends State<SellerDashboard> with TickerProviderSt
     );
     _animationController.forward();
   }
+
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: Colors.green[700],
-        title: const Text("Seller Dashboard", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Seller Dashboard",
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
@@ -122,7 +126,6 @@ class _SellerDashboardState extends State<SellerDashboard> with TickerProviderSt
           ),
         ],
       ),
-
       body: AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
         child: _screens[_currentIndex],
@@ -157,17 +160,29 @@ class _SellerDashboardState extends State<SellerDashboard> with TickerProviderSt
                     duration: Duration(milliseconds: 200),
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? _selectedColor.withOpacity(0.1) : Colors.transparent,
+                      color: isSelected
+                          ? _selectedColor.withOpacity(0.1)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(_icons[index], color: color, size: isSelected ? 28 : 24),
+                        Icon(
+                          _icons[index],
+                          color: color,
+                          size: isSelected ? 28 : 24,
+                        ),
                         SizedBox(height: 4),
                         Text(
                           _titles[index].split(' ')[0],
-                          style: TextStyle(fontSize: 12, color: color, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: color,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),
@@ -180,5 +195,4 @@ class _SellerDashboardState extends State<SellerDashboard> with TickerProviderSt
       ),
     );
   }
-
 }

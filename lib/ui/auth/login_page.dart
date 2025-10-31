@@ -1,10 +1,9 @@
 import 'package:first_project/approutes/app_routes.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../Widget/Round_button.dart';
 import '../../Widget/role_selecter.dart';
-import '../../services/auth_service.dart';
+import '../../controllers/auth_controller.dart';
 import '../../utils/app_utils.dart';
 
 
@@ -22,52 +21,26 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  final _auth = FirebaseAuth.instance;
-
   void handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      try {
-        // Login with email and password
-        final credential = await _auth.signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
+      final authController = Provider.of<AuthController>(context, listen: false);
+      
+      final success = await authController.login(
+        emailController.text.trim(),
+        passwordController.text.trim(),
+        role,
+      );
 
-        final uid = credential.user?.uid;
-        if (uid == null) throw Exception('User ID not found');
-
-        // Fetch user data from Firestore
-        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
-        if (!doc.exists || !doc.data()!.containsKey('role')) {
-          throw Exception('User data or role missing in database');
-        }
-
-        final fetchedRole = doc.data()!['role'] as String;
-
-        // Compare selected role with Firestore role
-        if (fetchedRole != role) {
-          AppUtils.showSnackBar(context, 'User with this role not found', isError: true);
-          return;
-        }
-
-        // Save login state and navigate
-        await AuthService.saveLoginState(uid, fetchedRole);
-        
-        if (fetchedRole == 'Seller') {
+      if (success) {
+        if (role == 'Seller') {
           AppRoutes.navigateAndClearStack(context, AppRoutes.sellerDashboard);
-        } else if (fetchedRole == 'Buyer') {
+        } else if (role == 'Buyer') {
           AppRoutes.navigateAndClearStack(context, AppRoutes.buyerRentMachinery);
-        } else if (fetchedRole == 'Labourer') {
+        } else if (role == 'Labourer') {
           AppRoutes.navigateAndClearStack(context, AppRoutes.findLabour);
-        } else {
-          AppUtils.showSnackBar(context, 'Unknown role', isError: true);
         }
-
-      } on FirebaseAuthException catch (e) {
-        AppUtils.showSnackBar(context, 'Login failed: ${e.message}', isError: true);
-      } catch (e) {
-        AppUtils.showSnackBar(context, 'Error: ${e.toString()}', isError: true);
+      } else {
+        AppUtils.showSnackBar(context, authController.errorMessage ?? 'Login failed', isError: true);
       }
     }
   }
@@ -184,9 +157,15 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  RoundButton(
-                    title: 'Login',
-                    onTap: handleLogin,
+                  Consumer<AuthController>(
+                    builder: (context, authController, child) {
+                      return authController.isLoading
+                          ? CircularProgressIndicator()
+                          : RoundButton(
+                              title: 'Login',
+                              onTap: handleLogin,
+                            );
+                    },
                   ),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 15),

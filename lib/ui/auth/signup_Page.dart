@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../Widget/Round_button.dart';
 import '../../Widget/role_selecter.dart';
 import '../../approutes/app_routes.dart';
 import '../../utils/app_utils.dart';
+import '../../controllers/auth_controller.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -15,9 +15,6 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
@@ -28,30 +25,22 @@ class _SignupPageState extends State<SignupPage> {
 
   void handleSignup() async {
     if (_formKey.currentState!.validate() && role.isNotEmpty) {
-      try {
-        final credential = await _auth.createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
+      final authController = Provider.of<AuthController>(context, listen: false);
+      
+      final success = await authController.signup(
+        nameController.text.trim(),
+        phoneController.text.trim(),
+        addressController.text.trim(),
+        emailController.text.trim(),
+        passwordController.text.trim(),
+        role,
+      );
 
-        await _firestore.collection('users')
-            .doc(credential.user!.uid)
-            .set({
-          'email': emailController.text.trim(),
-          'name': nameController.text.trim(),
-          'phone': phoneController.text.trim(),
-          'address': addressController.text.trim(),
-          'role': role,
-        });
-
+      if (success) {
         AppUtils.showSnackBar(context, 'Signup successful as $role');
         AppRoutes.navigateAndReplace(context, AppRoutes.login);
-      } on FirebaseAuthException catch (e) {
-        debugPrint('FirebaseAuthException: code=${e.code}, message=${e.message}');
-        AppUtils.showSnackBar(context, 'Signup failed: ${e.code}', isError: true);
-      } catch (e, st) {
-        debugPrint('Unknown error: $e\n$st');
-        AppUtils.showSnackBar(context, 'Signup failed: ${e.toString()}', isError: true);
+      } else {
+        AppUtils.showSnackBar(context, authController.errorMessage ?? 'Signup failed', isError: true);
       }
     } else if (role.isEmpty) {
       AppUtils.showSnackBar(context, 'Please select a role', isError: true);
@@ -183,9 +172,15 @@ class _SignupPageState extends State<SignupPage> {
                   },
                 ),
                 const SizedBox(height: 25),
-                RoundButton(
-                  title: 'Sign Up',
-                  onTap: handleSignup,
+                Consumer<AuthController>(
+                  builder: (context, authController, child) {
+                    return authController.isLoading
+                        ? CircularProgressIndicator()
+                        : RoundButton(
+                            title: 'Sign Up',
+                            onTap: handleSignup,
+                          );
+                  },
                 ),
                 const SizedBox(height: 15),
                 Row(

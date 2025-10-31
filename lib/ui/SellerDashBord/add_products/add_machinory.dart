@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:first_project/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../../controllers/machinery_controller.dart';
 
 class AddMachinery extends StatefulWidget {
   const AddMachinery({super.key});
@@ -20,7 +20,6 @@ class _AddMachineryState extends State<AddMachinery> {
   final contactController = TextEditingController();
 
   String category = 'Tractor';
-  bool isAvailable = true;
   File? selectedImage;
   final ImagePicker _picker = ImagePicker();
 
@@ -148,29 +147,34 @@ class _AddMachineryState extends State<AddMachinery> {
                 const SizedBox(height: 30),
 
                 // Submit Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF43A047),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Consumer<MachineryController>(
+                  builder: (context, machineryController, child) {
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF43A047),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 2,
+                        ),
+                        onPressed: machineryController.isLoading ? null : () {
+                          if (_formKey.currentState!.validate()) {
+                            _saveMachinery();
+                          }
+                        },
+                        child: machineryController.isLoading
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                                'Add Machinery',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                       ),
-                      elevation: 2,
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Save machinery data including image
-                        _saveMachinery();
-                      }
-                    },
-                    child: const Text(
-                      'Add Machinery',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -237,86 +241,56 @@ class _AddMachineryState extends State<AddMachinery> {
   }
 
   Future<void> _saveMachinery() async {
-    try {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
+    final machineryController = Provider.of<MachineryController>(context, listen: false);
+    
+    String imageUrl = "";
 
-      String imageUrl = "";
+    // Upload image to Firebase Storage
+    if (selectedImage != null) {
+      try {
+        final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('machinery_images')
+            .child('$fileName.jpg');
 
-      // Upload image to Firebase Storage
-      if (selectedImage != null) {
-        try {
-          final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-          final storageRef = FirebaseStorage.instance
-              .ref()
-              .child('machinery_images')
-              .child('$fileName.jpg');
+        UploadTask uploadTask = storageRef.putFile(selectedImage!);
+        TaskSnapshot snapshot = await uploadTask;
 
-          UploadTask uploadTask = storageRef.putFile(selectedImage!);
-          TaskSnapshot snapshot = await uploadTask;
-
-          // Only get URL if upload was successful
-          if (snapshot.state == TaskState.success) {
-            imageUrl = await snapshot.ref.getDownloadURL();
-            print("Image uploaded URL: $imageUrl");
-          } else {
-            print("Image upload failed. Task state: ${snapshot.state}");
-          }
-        } catch (e) {
-          print("Exception during upload: $e");
+        if (snapshot.state == TaskState.success) {
+          imageUrl = await snapshot.ref.getDownloadURL();
         }
-      } else {
-        print("No image selected");
+      } catch (e) {
+        print("Exception during upload: $e");
       }
+    }
 
-      print("Final imageUrl before Firestore save: $imageUrl");
+    // Save machinery data using controller
+    final machineryData = {
+      'name': nameController.text,
+      'category': category,
+      'pricePerDay': double.tryParse(priceController.text) ?? 0,
+      'location': locationController.text,
+      'contact': contactController.text,
+      'description': descriptionController.text,
+      'isAvailable': true,
+      'imageUrl': imageUrl,
+    };
 
-      // Get current user ID
-      String? userId = await AuthService.getUserId();
-      if (userId == null) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("User not logged in"), backgroundColor: Colors.red),
-        );
-        return;
-      }
+    final success = await machineryController.addMachinery(machineryData);
 
-      // Save machinery data to Firestore
-      final machineryData = {
-        'userId': userId,
-        'name': nameController.text,
-        'category': category,
-        'pricePerDay': double.tryParse(priceController.text) ?? 0,
-        'location': locationController.text,
-        'contact': contactController.text,
-        'description': descriptionController.text,
-        'isAvailable': true,
-        'imageUrl': imageUrl,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      await FirebaseFirestore.instance.collection('machinery').add(machineryData);
-
-      Navigator.of(context).pop();
-
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Machinery added to Firestore!'),
+          content: const Text('Machinery added successfully!'),
           backgroundColor: const Color(0xFF43A047),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
-
-      Navigator.pop(context); // Go back after success
-    } catch (e) {
-      Navigator.of(context).pop(); // Close loader
+      Navigator.pop(context);
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(machineryController.errorMessage ?? 'Failed to add machinery'),
           backgroundColor: Colors.red,
         ),
       );

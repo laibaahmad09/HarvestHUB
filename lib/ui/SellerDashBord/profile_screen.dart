@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../utils/app_utils.dart';
+import '../../controllers/user_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,7 +19,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   
   Map<String, dynamic>? userData;
   bool _isEditing = false;
-  bool _isLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -33,7 +32,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    fetchUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserController>(context, listen: false).loadUserData();
+    });
   }
 
   @override
@@ -46,38 +47,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     super.dispose();
   }
 
-  void fetchUserData() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-    if (doc.exists && mounted) {
-      setState(() {
-        userData = doc.data();
-        _nameController.text = userData?['name'] ?? '';
-        _phoneController.text = userData?['phone'] ?? '';
-        _addressController.text = userData?['address'] ?? '';
-        _emailController.text = userData?['email'] ?? '';
-      });
-      _animationController.forward();
-    }
-  }
-
   void saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      final userController = Provider.of<UserController>(context, listen: false);
       
-      final uid = FirebaseAuth.instance.currentUser!.uid;
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      final success = await userController.updateUserData({
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'address': _addressController.text.trim(),
       });
 
-      setState(() {
-        _isLoading = false;
-        _isEditing = false;
-      });
-
-      AppUtils.showSnackBar(context, "Profile updated successfully");
+      if (success) {
+        setState(() => _isEditing = false);
+        AppUtils.showSnackBar(context, "Profile updated successfully");
+      } else {
+        AppUtils.showSnackBar(context, userController.errorMessage ?? "Update failed", isError: true);
+      }
     }
   }
 
@@ -85,13 +70,26 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F9F1),
-      body: userData == null
-          ? const Center(
+      body: Consumer<UserController>(
+        builder: (context, userController, child) {
+          if (userController.isLoading) {
+            return const Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A7A4C)),
               ),
-            )
-          : CustomScrollView(
+            );
+          }
+          
+          if (userController.userData != null) {
+            _nameController.text = userController.userName;
+            _phoneController.text = userController.userPhone;
+            _addressController.text = userController.userAddress;
+            _emailController.text = userController.userEmail;
+            userData = userController.userData;
+            _animationController.forward();
+          }
+          
+          return CustomScrollView(
               slivers: [
                 _buildSliverAppBar(),
                 SliverToBoxAdapter(
@@ -101,7 +99,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   ),
                 ),
               ],
-            ),
+            );
+        },
+      ),
     );
   }
 
@@ -323,9 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () {
-          if (!_isLoading) saveProfile();
-        },
+        onPressed: saveProfile,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4A7A4C),
           foregroundColor: Colors.white,
@@ -334,19 +332,23 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
           ),
           elevation: 4,
         ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                'Save Changes',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+        child: Consumer<UserController>(
+          builder: (context, userController, child) {
+            return userController.isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Save Changes',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  );
+          },
+        ),
       ),
     );
   }

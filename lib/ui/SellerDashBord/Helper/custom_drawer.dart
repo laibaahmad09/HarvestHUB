@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../../../controllers/auth_controller.dart';
+import '../../../controllers/user_controller.dart';
 import '../../../approutes/app_routes.dart';
 
 class CustomDrawer extends StatefulWidget {
@@ -12,9 +12,6 @@ class CustomDrawer extends StatefulWidget {
 }
 
 class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderStateMixin {
-  String userName = '';
-  String userPhone = '';
-  String userEmail = '';
   late AnimationController _animationController;
 
   @override
@@ -25,22 +22,9 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
       vsync: this,
     );
     _animationController.forward();
-    _loadUserData();
-  }
-
-  void _loadUserData() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      FirebaseFirestore.instance.collection('users').doc(uid).get().then((snapshot) {
-        if (snapshot.exists && mounted) {
-          setState(() {
-            userName = snapshot['name'] ?? '';
-            userPhone = snapshot['phone'] ?? '';
-            userEmail = snapshot['email'] ?? '';
-          });
-        }
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserController>(context, listen: false).loadUserData();
+    });
   }
 
   @override
@@ -75,60 +59,64 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Color(0xFF2E5E25), Color(0xFF4A7A4C)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFF2E5E25).withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+    return Consumer<UserController>(
+      builder: (context, userController, child) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF2E5E25), Color(0xFF4A7A4C)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF2E5E25).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: const CircleAvatar(
-              radius: 45,
-              backgroundColor: Colors.transparent,
-              child: Icon(Icons.agriculture, size: 45, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (userName.isNotEmpty)
-            Text(
-              userName,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E5E25),
+                child: const CircleAvatar(
+                  radius: 45,
+                  backgroundColor: Colors.transparent,
+                  child: Icon(Icons.agriculture, size: 45, color: Colors.white),
+                ),
               ),
-            ),
-          const SizedBox(height: 4),
-          Text(
-            userEmail,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          if (userPhone.isNotEmpty)
-            Text(
-              userPhone,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+              const SizedBox(height: 16),
+              if (userController.userName.isNotEmpty)
+                Text(
+                  userController.userName,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E5E25),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Text(
+                userController.userEmail,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
-        ],
-      ),
+              if (userController.userPhone.isNotEmpty)
+                Text(
+                  userController.userPhone,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -286,8 +274,8 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              await FirebaseAuth.instance.signOut();
-              await AuthService.clearLoginState();
+              final authController = Provider.of<AuthController>(context, listen: false);
+              await authController.logout();
               AppRoutes.navigateAndClearStack(context, AppRoutes.login);
             },
             style: ElevatedButton.styleFrom(

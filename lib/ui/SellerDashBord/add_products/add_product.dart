@@ -1,6 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:first_project/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../controllers/product_controller.dart';
 
 class AddProduct extends StatefulWidget {
   const AddProduct({super.key});
@@ -12,7 +12,11 @@ class AddProduct extends StatefulWidget {
 class _AddProductState extends State<AddProduct> {
   final _formKey = GlobalKey<FormState>();
   
-  String? productType, selectedCrop, price, stock, location, variety, unit, quality;
+  String? productType, selectedCrop, location, variety, unit, quality;
+  final priceController = TextEditingController();
+  final stockController = TextEditingController();
+  final seedNameController = TextEditingController();
+  final locationController = TextEditingController();
   final cropOptions = ['Wheat', 'Rice', 'Corn', 'Barley', 'Sugarcane'];
 
   @override
@@ -68,15 +72,21 @@ class _AddProductState extends State<AddProduct> {
               const SizedBox(height: 24),
 
               // Submit Button
-              ElevatedButton(
-                onPressed: _submitProduct,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text("Add Product", style: TextStyle(fontSize: 16)),
+              Consumer<ProductController>(
+                builder: (context, productController, child) {
+                  return ElevatedButton(
+                    onPressed: productController.isLoading ? null : _submitProduct,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: productController.isLoading
+                        ? CircularProgressIndicator(color: Colors.white)
+                        : const Text("Add Product", style: TextStyle(fontSize: 16)),
+                  );
+                },
               ),
             ],
           ),
@@ -89,31 +99,26 @@ class _AddProductState extends State<AddProduct> {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    try {
-      String? userId = await AuthService.getUserId();
-      if (userId == null) {
-        _showMessage("User not logged in");
-        return;
-      }
+    final productController = Provider.of<ProductController>(context, listen: false);
+    final collection = productType == 'Crop' ? 'crops' : 'seeds';
+    
+    final data = {
+      'name': productType == 'Seed' ? seedNameController.text : selectedCrop,
+      'price': double.tryParse(priceController.text) ?? 0.0,
+      'stock': int.tryParse(stockController.text) ?? 0,
+      'location': locationController.text,
+      'unit': unit ?? '',
+      'quality': quality ?? '',
+      if (productType == 'Seed') 'variety': variety ?? '',
+    };
 
-      final collection = productType == 'Crop' ? 'crops' : 'seeds';
-      final data = {
-        'userId': userId,
-        'name': selectedCrop,
-        'price': price,
-        'stock': stock,
-        'location': location,
-        'unit': unit,
-        'quality': quality,
-        'timestamp': FieldValue.serverTimestamp(),
-        if (productType == 'Seed') 'variety': variety,
-      };
-
-      await FirebaseFirestore.instance.collection(collection).add(data);
+    final success = await productController.addProduct(data, collection);
+    
+    if (success) {
       _showMessage("$productType added successfully");
       _resetForm();
-    } catch (e) {
-      _showMessage("Error: ${e.toString()}");
+    } else {
+      _showMessage(productController.errorMessage ?? "Failed to add $productType");
     }
   }
 
@@ -123,9 +128,16 @@ class _AddProductState extends State<AddProduct> {
 
   void _resetForm() {
     _formKey.currentState!.reset();
+    priceController.clear();
+    stockController.clear();
+    seedNameController.clear();
+    locationController.clear();
     setState(() {
       productType = null;
       selectedCrop = null;
+      variety = null;
+      unit = null;
+      quality = null;
     });
   }
 
@@ -154,12 +166,30 @@ class _AddProductState extends State<AddProduct> {
             ),
 
             const SizedBox(height: 12),
-            _buildTextField("Price per KG", keyboardType: TextInputType.number, onSaved: (val) => price = val),
+            TextFormField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Price per KG",
+                border: OutlineInputBorder(),
+              ),
+              validator: (val) => val?.isEmpty == true ? "Price is required" : null,
+            ),
 
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildTextField("Stock", keyboardType: TextInputType.number, onSaved: (val) => stock = val)),
+                Expanded(
+                  child: TextFormField(
+                    controller: stockController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Stock",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) => val?.isEmpty == true ? "Stock is required" : null,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(child: _buildDropdown("Unit", ["KG", "Ton"], (val) => unit = val)),
               ],
@@ -167,7 +197,16 @@ class _AddProductState extends State<AddProduct> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildTextField("Location", onSaved: (val) => location = val)),
+                Expanded(
+                  child: TextFormField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: "Location",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) => val?.isEmpty == true ? "Location is required" : null,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(child: _buildDropdown("Quality", ["A", "B", "C", "Organic"], (val) => quality = val)),
               ],
@@ -188,15 +227,42 @@ class _AddProductState extends State<AddProduct> {
           children: [
             const Text("Seed Details", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            _buildTextField("Seed Name", onSaved: (val) => selectedCrop = val),
+            TextFormField(
+              controller: seedNameController,
+              decoration: const InputDecoration(
+                labelText: "Seed Name",
+                border: OutlineInputBorder(),
+              ),
+              validator: (val) => val?.isEmpty == true ? "Seed Name is required" : null,
+            ),
             const SizedBox(height: 12),
             _buildDropdown("Variety", ["Hybrid 999", "Galaxy 2013", "Punjab 2011"], (val) => variety = val),
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildTextField("Price per KG", keyboardType: TextInputType.number, onSaved: (val) => price = val)),
+                Expanded(
+                  child: TextFormField(
+                    controller: priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Price per KG",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) => val?.isEmpty == true ? "Price is required" : null,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildTextField("Stock", keyboardType: TextInputType.number, onSaved: (val) => stock = val)),
+                Expanded(
+                  child: TextFormField(
+                    controller: stockController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Stock",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) => val?.isEmpty == true ? "Stock is required" : null,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -204,7 +270,16 @@ class _AddProductState extends State<AddProduct> {
               children: [
                 Expanded(child: _buildDropdown("Unit", ["KG", "Ton"], (val) => unit = val)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildTextField("Location", onSaved: (val) => location = val)),
+                Expanded(
+                  child: TextFormField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: "Location",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) => val?.isEmpty == true ? "Location is required" : null,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -215,16 +290,13 @@ class _AddProductState extends State<AddProduct> {
     );
   }
 
-  Widget _buildTextField(String label, {TextInputType? keyboardType, Function(String?)? onSaved}) {
-    return TextFormField(
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      validator: (val) => val?.isEmpty == true ? "$label is required" : null,
-      onSaved: onSaved,
-    );
+  @override
+  void dispose() {
+    priceController.dispose();
+    stockController.dispose();
+    seedNameController.dispose();
+    locationController.dispose();
+    super.dispose();
   }
 
   Widget _buildDropdown(String label, List<String> items, Function(String?) onChanged) {
