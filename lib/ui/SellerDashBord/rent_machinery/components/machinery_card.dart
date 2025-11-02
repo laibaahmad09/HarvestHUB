@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 class MachineryCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -10,7 +11,7 @@ class MachineryCard extends StatelessWidget {
     final name = data['name'] ?? 'Unnamed';
     final price = data['pricePerDay']?.toString() ?? '0';
     final location = data['location'] ?? 'Unknown';
-    final imageUrl = data['imageUrl'] ?? '';
+    final imageBase64 = data['imageBase64'] ?? '';
     final available = data['isAvailable'] ?? false;
 
     return Container(
@@ -31,9 +32,9 @@ class MachineryCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            child: imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
+            child: imageBase64.isNotEmpty
+                ? Image.memory(
+                    base64Decode(imageBase64),
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,

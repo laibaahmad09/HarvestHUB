@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/machinery_controller.dart';
 
@@ -243,25 +243,15 @@ class _AddMachineryState extends State<AddMachinery> {
   Future<void> _saveMachinery() async {
     final machineryController = Provider.of<MachineryController>(context, listen: false);
     
-    String imageUrl = "";
+    String imageBase64 = "";
 
-    // Upload image to Firebase Storage
+    // Convert image to Base64 string
     if (selectedImage != null) {
       try {
-        final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('machinery_images')
-            .child('$fileName.jpg');
-
-        UploadTask uploadTask = storageRef.putFile(selectedImage!);
-        TaskSnapshot snapshot = await uploadTask;
-
-        if (snapshot.state == TaskState.success) {
-          imageUrl = await snapshot.ref.getDownloadURL();
-        }
+        List<int> imageBytes = await selectedImage!.readAsBytes();
+        imageBase64 = base64Encode(imageBytes);
       } catch (e) {
-        print("Exception during upload: $e");
+        print("Exception during Base64 conversion: $e");
       }
     }
 
@@ -274,7 +264,7 @@ class _AddMachineryState extends State<AddMachinery> {
       'contact': contactController.text,
       'description': descriptionController.text,
       'isAvailable': true,
-      'imageUrl': imageUrl,
+      'imageBase64': imageBase64,
     };
 
     final success = await machineryController.addMachinery(machineryData);
