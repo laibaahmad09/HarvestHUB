@@ -1,16 +1,16 @@
+import 'package:first_project/ui/SellerDashBord/inventory/inventory_screen.dart';
+import 'package:first_project/ui/SellerDashBord/profile_screen.dart';
+import 'package:first_project/ui/SellerDashBord/seller_dash_bord.dart';
 import 'package:flutter/material.dart';
 import '../ui/splashScreen/splash_screen.dart';
 import '../ui/auth/login_page.dart';
 import '../ui/auth/signup_Page.dart';
-import '../ui/SelerDashBord/seller_dash_bord.dart';
-import '../ui/SelerDashBord/profile_screen.dart';
-import '../ui/SelerDashBord/inventory.dart';
-import '../ui/SelerDashBord/find_labour.dart';
-import '../ui/SelerDashBord/rent_machinery/rent_machinery_screen.dart';
-import '../ui/SelerDashBord/sell_product/sell_product_screen.dart';
-import '../ui/SelerDashBord/add_products/add_product.dart';
+import '../ui/SellerDashBord/hire_labour/hire_labour_screen.dart';
+import '../ui/SellerDashBord/rent_machinery/rent_machinery_screen.dart';
+import '../ui/SellerDashBord/sell_product/sell_product_screen.dart';
+import '../ui/SellerDashBord/add_products/add_product.dart';
 import '../ui/BuyerDashbord/buyer_rent_machinery.dart';
-import '../ui/SelerDashBord/add_products/add_machinory.dart';
+import '../ui/SellerDashBord/add_products/add_machinory.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
