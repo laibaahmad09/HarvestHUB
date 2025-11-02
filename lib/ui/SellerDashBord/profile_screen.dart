@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../../utils/app_utils.dart';
 import '../../controllers/user_controller.dart';
 
@@ -135,14 +136,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     ),
                   ],
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.agriculture,
-                    size: 50,
-                    color: Color(0xFF4A7A4C),
-                  ),
+                  child: _buildProfileImage(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -353,5 +350,28 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
     );
   }
 
-
+  Widget _buildProfileImage() {
+    final profileImageBase64 = userData?['profileImageBase64'] ?? '';
+    
+    if (profileImageBase64.isNotEmpty) {
+      try {
+        return ClipOval(
+          child: Image.memory(
+            base64Decode(profileImageBase64),
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (e) {
+        print('Error decoding profile image: $e');
+      }
+    }
+    
+    return const Icon(
+      Icons.agriculture,
+      size: 50,
+      color: Color(0xFF4A7A4C),
+    );
+  }
 }

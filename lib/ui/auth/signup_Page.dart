@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import '../../Widget/Round_button.dart';
 import '../../Widget/role_selecter.dart';
 import '../../approutes/app_routes.dart';
@@ -22,10 +25,31 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController passwordController = TextEditingController();
   String role = '';
   bool _obscurePassword = true;
+  File? selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        selectedImage = File(image.path);
+      });
+    }
+  }
 
   void handleSignup() async {
     if (_formKey.currentState!.validate() && role.isNotEmpty) {
       final authController = Provider.of<AuthController>(context, listen: false);
+      
+      String profileImageBase64 = "";
+      if (selectedImage != null) {
+        try {
+          List<int> imageBytes = await selectedImage!.readAsBytes();
+          profileImageBase64 = base64Encode(imageBytes);
+        } catch (e) {
+          print("Exception during Base64 conversion: $e");
+        }
+      }
       
       final success = await authController.signup(
         nameController.text.trim(),
@@ -34,6 +58,7 @@ class _SignupPageState extends State<SignupPage> {
         emailController.text.trim(),
         passwordController.text.trim(),
         role,
+        profileImageBase64,
       );
 
       if (success) {
@@ -75,6 +100,37 @@ class _SignupPageState extends State<SignupPage> {
                 const Text(
                   'Signup',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF3A6B2E)),
+                ),
+                const SizedBox(height: 20),
+                // Profile Picture Section
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFE8F5E8),
+                      border: Border.all(color: const Color(0xFF4A7A4C), width: 2),
+                    ),
+                    child: selectedImage != null
+                        ? ClipOval(
+                            child: Image.file(
+                              selectedImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.add_a_photo,
+                            size: 40,
+                            color: Color(0xFF4A7A4C),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Tap to add profile picture',
+                  style: TextStyle(color: Color(0xFF4A7A4C), fontSize: 12),
                 ),
                 const SizedBox(height: 20),
                 TextFormField(

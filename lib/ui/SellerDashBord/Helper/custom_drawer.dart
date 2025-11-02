@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../../../controllers/auth_controller.dart';
 import '../../../controllers/user_controller.dart';
 import '../../../approutes/app_routes.dart';
@@ -81,10 +82,10 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
                     ),
                   ],
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 45,
                   backgroundColor: Colors.transparent,
-                  child: Icon(Icons.agriculture, size: 45, color: Colors.white),
+                  child: _buildDrawerProfileImage(userController),
                 ),
               ),
               const SizedBox(height: 16),
@@ -312,5 +313,26 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
         ],
       ),
     );
+  }
+
+  Widget _buildDrawerProfileImage(UserController userController) {
+    final profileImageBase64 = userController.userData?['profileImageBase64'] ?? '';
+    
+    if (profileImageBase64.isNotEmpty) {
+      try {
+        return ClipOval(
+          child: Image.memory(
+            base64Decode(profileImageBase64),
+            width: 90,
+            height: 90,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (e) {
+        print('Error decoding drawer profile image: $e');
+      }
+    }
+    
+    return const Icon(Icons.agriculture, size: 45, color: Colors.white);
   }
 }
