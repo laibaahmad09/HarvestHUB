@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/product_controller.dart';
 import '../../../approutes/app_routes.dart';
+import '../../../utils/app_colors.dart';
 import 'components/dashboard_header.dart';
 import 'components/stat_card.dart';
 import 'components/action_buttons.dart';
@@ -27,8 +28,9 @@ class _SellDashboardState extends State<SellDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SingleChildScrollView(
+      body: Container(
+        decoration: AppColors.backgroundDecoration,
+        child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,6 +70,7 @@ class _SellDashboardState extends State<SellDashboard> {
             ProductList(collection: 'seeds'),
             SizedBox(height: 20),
           ],
+        ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

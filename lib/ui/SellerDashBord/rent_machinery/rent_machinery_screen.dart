@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../approutes/app_routes.dart';
 import '../../../controllers/machinery_controller.dart';
+import '../../../utils/app_colors.dart';
 import 'components/machinery_header.dart';
 import 'components/category_filter.dart';
 import 'components/machinery_list.dart';
@@ -55,8 +56,9 @@ class _RentDashboardState extends State<RentDashboard>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: Stack(
+      body: Container(
+        decoration: AppColors.backgroundDecoration,
+        child: Stack(
         children: [
           SafeArea(
             child: CustomScrollView(
@@ -90,6 +92,7 @@ class _RentDashboardState extends State<RentDashboard>
           ),
           StatsOverlay(),
         ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

@@ -1,7 +1,7 @@
 import 'package:first_project/approutes/app_routes.dart';
+import 'package:first_project/ui/SellerDashBord/hire_labour/hire_labour_screen.dart';
+import 'package:first_project/ui/SellerDashBord/inventory/inventory_screen.dart';
 import 'package:flutter/material.dart';
-import 'find_labour.dart';
-import 'inventory.dart';
 import 'rent_machinery/rent_machinery_screen.dart';
 import 'sell_product/sell_product_screen.dart';
 import 'Helper/custom_drawer.dart';
