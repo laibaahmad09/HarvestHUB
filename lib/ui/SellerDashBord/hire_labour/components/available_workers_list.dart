@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AvailableWorkersList extends StatelessWidget {
   final List<Map<String, dynamic>> labourers = [
     {
-      'name': 'Ahmed Ali',
+      'name': 'Ahmad Ali',
       'skill': 'Harvesting Expert',
       'experience': '5 years',
       'rating': 4.8,
@@ -21,7 +21,7 @@ class AvailableWorkersList extends StatelessWidget {
       'available': true,
     },
     {
-      'name': 'Fatima Khan',
+      'name': 'Ali Khan',
       'skill': 'Crop Specialist',
       'experience': '3 years',
       'rating': 4.7,

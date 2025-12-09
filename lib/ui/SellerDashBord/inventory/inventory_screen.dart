@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../utils/app_colors.dart';
 
-class InventoryDashboard extends StatelessWidget {
+class InventoryDashboard extends StatefulWidget {
+  const InventoryDashboard({super.key});
+
+  @override
+  State<InventoryDashboard> createState() => _InventoryDashboardState();
+}
+
+class _InventoryDashboardState extends State<InventoryDashboard> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: AppColors.backgroundDecoration,
         child: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -15,7 +27,7 @@ class InventoryDashboard extends StatelessWidget {
             // Stats Cards
             Row(
               children: [
-                _buildStatCard('Total Products', '45', Icons.inventory, Colors.blue),
+                _buildTotalProductsCard(),
                 SizedBox(width: 12),
                 _buildStatCard('Total Earnings', '₹85,000', Icons.account_balance_wallet, Colors.green),
               ],
@@ -31,7 +43,7 @@ class InventoryDashboard extends StatelessWidget {
             SizedBox(height: 12),
             Container(
               width: double.infinity,
-              child: _buildStatCard('Rental Products', '12', Icons.agriculture, Colors.teal),
+              child: _buildRentalProductsCard(),
             ),
             SizedBox(height: 24),
             
@@ -46,11 +58,8 @@ class InventoryDashboard extends StatelessWidget {
             ),
             SizedBox(height: 12),
             
-            // Sample Listings
-            _buildListingCard('Wheat Premium', 'Crop', '₹50/KG', 'Active'),
-            _buildListingCard('Rice Basmati', 'Crop', '₹80/KG', 'Active'),
-            _buildListingCard('Tractor JD 5050', 'Machinery', '₹2500/day', 'Rented'),
-            _buildListingCard('Corn Seeds', 'Seeds', '₹120/KG', 'Low Stock'),
+            // Real Firebase Listings
+            _buildFirebaseListings(),
           ],
         ),
         ),
@@ -106,6 +115,136 @@ class InventoryDashboard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFirebaseListings() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    
+    if (userId == null) {
+      return Center(
+        child: Text(
+          'Please login to view your listings',
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('crops').where('userId', isEqualTo: userId).snapshots(),
+      builder: (context, cropsSnapshot) {
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('seeds').where('userId', isEqualTo: userId).snapshots(),
+          builder: (context, seedsSnapshot) {
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('machinery').where('userId', isEqualTo: userId).snapshots(),
+              builder: (context, machinerySnapshot) {
+                if (!cropsSnapshot.hasData || !seedsSnapshot.hasData || !machinerySnapshot.hasData) {
+                  return SizedBox();
+                }
+                
+                List<Widget> allListings = [];
+                
+                // Add crops
+                for (var doc in cropsSnapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  allListings.add(_buildListingCard(
+                    data['name'] ?? 'Unknown Crop',
+                    'Crop',
+                    '₹${data['price']}/KG',
+                    'Active',
+                  ));
+                }
+                
+                // Add seeds
+                for (var doc in seedsSnapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  allListings.add(_buildListingCard(
+                    data['name'] ?? 'Unknown Seed',
+                    'Seeds',
+                    '₹${data['price']}/KG',
+                    'Active',
+                  ));
+                }
+                
+                // Add machinery
+                for (var doc in machinerySnapshot.data!.docs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  allListings.add(_buildListingCard(
+                    data['name'] ?? 'Unknown Machine',
+                    'Machinery',
+                    '₹${data['pricePerDay']}/day',
+                    data['isAvailable'] == true ? 'Available' : 'Rented',
+                  ));
+                }
+                
+                if (allListings.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: Text(
+                        'No products added yet',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                
+                return Column(children: allListings);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTotalProductsCard() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      return _buildStatCard('Total Products', '0', Icons.inventory, Colors.blue);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('crops').where('userId', isEqualTo: userId).snapshots(),
+      builder: (context, cropsSnapshot) {
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('seeds').where('userId', isEqualTo: userId).snapshots(),
+          builder: (context, seedsSnapshot) {
+            if (!cropsSnapshot.hasData || !seedsSnapshot.hasData) {
+              return _buildStatCard('Total Products', 'Loading...', Icons.inventory, Colors.blue);
+            }
+            
+            final cropsCount = cropsSnapshot.data!.docs.length;
+            final seedsCount = seedsSnapshot.data!.docs.length;
+            final totalCount = cropsCount + seedsCount;
+            
+            return _buildStatCard('Total Products', '$totalCount', Icons.inventory, Colors.blue);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRentalProductsCard() {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      return _buildStatCard('Rental Products', '0', Icons.agriculture, Colors.teal);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('machinery').where('userId', isEqualTo: userId).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return _buildStatCard('Rental Products', 'Loading...', Icons.agriculture, Colors.teal);
+        }
+        
+        final machineryCount = snapshot.data!.docs.length;
+        return _buildStatCard('Rental Products', '$machineryCount', Icons.agriculture, Colors.teal);
+      },
     );
   }
 

@@ -57,6 +57,8 @@ class _RentDashboardState extends State<RentDashboard>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: AppColors.backgroundDecoration,
         child: Stack(
         children: [

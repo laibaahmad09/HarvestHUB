@@ -18,6 +18,8 @@ class _HireLabourDashboardState extends State<HireLabourDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: AppColors.backgroundDecoration,
         child: SingleChildScrollView(
         padding: EdgeInsets.all(16),

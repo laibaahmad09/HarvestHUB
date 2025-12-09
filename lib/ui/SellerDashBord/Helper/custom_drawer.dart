@@ -263,29 +263,103 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
   void _handleLogout() async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final authController = Provider.of<AuthController>(context, listen: false);
-              await authController.logout();
-              AppRoutes.navigateAndClearStack(context, AppRoutes.login);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 16,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [Colors.red[50]!, Colors.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: const Text('Logout'),
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.logout,
+                  size: 40,
+                  color: Colors.red[600],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Logout',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[700],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to logout?',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final authController = Provider.of<AuthController>(context, listen: false);
+                        await authController.logout();
+                        AppRoutes.navigateAndClearStack(context, AppRoutes.login);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -293,24 +367,90 @@ class _CustomDrawerState extends State<CustomDrawer> with SingleTickerProviderSt
   void _showAboutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.agriculture, color: Color(0xFF4A7A4C)),
-            const SizedBox(width: 8),
-            const Text('HarvestHub'),
-          ],
-        ),
-        content: const Text(
-          'Empowering Farmers - Growing Together\n\nA comprehensive agricultural platform connecting farmers, buyers, and laborers.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 16,
+        child: Container(
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [Colors.green[50]!, Colors.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: 10),
+              Text(
+                'HarvestHub',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E5E25),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Version 1.0.0',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 20),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withOpacity(0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '🌱 Empowering Farmers - Growing Together',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF4A7A4C),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'A comprehensive agricultural platform connecting farmers, buyers, and laborers for a sustainable future.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 24),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF4A7A4C),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  ),
+                  child: Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

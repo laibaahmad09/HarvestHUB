@@ -2,9 +2,12 @@ import 'package:first_project/approutes/app_routes.dart';
 import 'package:first_project/ui/SellerDashBord/hire_labour/hire_labour_screen.dart';
 import 'package:first_project/ui/SellerDashBord/inventory/inventory_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'dart:convert';
 import 'rent_machinery/rent_machinery_screen.dart';
 import 'sell_product/sell_product_screen.dart';
 import 'Helper/custom_drawer.dart';
+import '../../controllers/user_controller.dart';
 
 class SellerDashboard extends StatefulWidget {
   const SellerDashboard({super.key});
@@ -20,10 +23,10 @@ class _SellerDashboardState extends State<SellerDashboard>
   late Animation<double> _fadeAnimation;
 
   final List<Widget> _screens = [
-    SellDashboard(),
-    RentDashboard(),
-    HireLabourDashboard(),
-    InventoryDashboard(),
+    const SellDashboard(),
+    const RentDashboard(),
+    const HireLabourDashboard(),
+    const InventoryDashboard(),
   ];
   final List<String> _titles = [
     'Sell Products',
@@ -49,6 +52,9 @@ class _SellerDashboardState extends State<SellerDashboard>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserController>(context, listen: false).loadUserData();
+    });
   }
 
   @override
@@ -118,10 +124,35 @@ class _SellerDashboardState extends State<SellerDashboard>
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.account_circle_rounded, color: Colors.white),
-            onPressed: () {
-              AppRoutes.navigateTo(context, AppRoutes.profile);
+          Consumer<UserController>(
+            builder: (context, userController, child) {
+              return GestureDetector(
+                onTap: () {
+                  AppRoutes.navigateTo(context, AppRoutes.profile);
+                },
+                child: Container(
+                  margin: EdgeInsets.only(right: 8, top: 8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 17,
+                    backgroundColor: Colors.white,
+                    child: _buildProfileImage(userController),
+                  ),
+                ),
+              );
             },
           ),
         ],
@@ -192,6 +223,41 @@ class _SellerDashboardState extends State<SellerDashboard>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileImage(UserController userController) {
+    final profileImageBase64 = userController.userData?['profileImageBase64'] ?? '';
+    
+    if (profileImageBase64.isNotEmpty) {
+      try {
+        return ClipOval(
+          child: Image.memory(
+            base64Decode(profileImageBase64),
+            width: 35,
+            height: 35,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (e) {
+        print('Error decoding profile image: $e');
+      }
+    }
+    
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Colors.green[400]!, Colors.green[600]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Icon(
+        Icons.person,
+        size: 20,
+        color: Colors.white,
       ),
     );
   }

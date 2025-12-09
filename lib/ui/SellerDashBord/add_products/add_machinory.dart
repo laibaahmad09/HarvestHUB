@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/machinery_controller.dart';
+import '../../../utils/app_colors.dart';
 
 class AddMachinery extends StatefulWidget {
   const AddMachinery({super.key});
@@ -40,14 +41,17 @@ class _AddMachineryState extends State<AddMachinery> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Add Machinery', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: AppColors.backgroundDecoration,
+        child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Form(
@@ -179,6 +183,7 @@ class _AddMachineryState extends State<AddMachinery> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

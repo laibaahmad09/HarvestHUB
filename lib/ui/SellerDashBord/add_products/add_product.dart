@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../controllers/product_controller.dart';
+import '../../../utils/app_colors.dart';
 
 class AddProduct extends StatefulWidget {
   const AddProduct({super.key});
@@ -27,7 +28,11 @@ class _AddProductState extends State<AddProduct> {
         backgroundColor: Colors.green[700],
         centerTitle: true,
       ),
-      body: Padding(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: AppColors.backgroundDecoration,
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -90,6 +95,7 @@ class _AddProductState extends State<AddProduct> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

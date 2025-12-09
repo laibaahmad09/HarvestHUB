@@ -5,7 +5,7 @@ class HiredWorkersList extends StatelessWidget {
   Widget build(BuildContext context) {
     final hiredWorkers = [
       {
-        'name': 'Fatima Khan',
+        'name': 'Ali Khan',
         'skill': 'Crop Specialist', 
         'rating': 4.7,
         'location': 'Multan',

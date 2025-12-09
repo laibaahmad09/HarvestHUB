@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../approutes/app_routes.dart';
 
 class BuyerRentDashboard extends StatefulWidget {
   const BuyerRentDashboard({super.key});
@@ -96,6 +99,12 @@ class _BuyerRentDashboardState extends State<BuyerRentDashboard> {
             icon: Icon(Icons.filter_list, color: Colors.white),
             onPressed: () {
               _showFilterBottomSheet();
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.logout, color: Colors.white),
+            onPressed: () {
+              _showLogoutDialog();
             },
           ),
         ],
@@ -580,6 +589,42 @@ class _BuyerRentDashboardState extends State<BuyerRentDashboard> {
           ],
         );
       },
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.logout, color: Colors.red[600]),
+            SizedBox(width: 8),
+            Text('Logout'),
+          ],
+        ),
+        content: Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final authController = Provider.of<AuthController>(context, listen: false);
+              await authController.logout();
+              AppRoutes.navigateAndClearStack(context, AppRoutes.login);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Logout'),
+          ),
+        ],
+      ),
     );
   }
 }
