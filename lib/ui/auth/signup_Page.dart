@@ -29,11 +29,18 @@ class _SignupPageState extends State<SignupPage> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        selectedImage = File(image.path);
-      });
+    print('_pickImage called');
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      print('Image selected: ${image?.path}');
+      if (image != null) {
+        setState(() {
+          selectedImage = File(image.path);
+        });
+        print('selectedImage set: ${selectedImage?.path}');
+      }
+    } catch (e) {
+      print('Error picking image: $e');
     }
   }
 
@@ -230,12 +237,11 @@ class _SignupPageState extends State<SignupPage> {
                 const SizedBox(height: 25),
                 Consumer<AuthController>(
                   builder: (context, authController, child) {
-                    return authController.isLoading
-                        ? CircularProgressIndicator()
-                        : RoundButton(
-                            title: 'Sign Up',
-                            onTap: handleSignup,
-                          );
+                    return RoundButton(
+                      title: 'Sign Up',
+                      onTap: authController.isLoading ? null : handleSignup,
+                      isLoading: authController.isLoading,
+                    );
                   },
                 ),
                 const SizedBox(height: 15),
