@@ -63,7 +63,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<bool> signup(String name, String phone, String address, String email, String password, String role, [String? profileImageBase64]) async {
+  Future<bool> signup(String name, String phone, String address, String email, String password, String role, String profileImageBase64) async {
     try {
       _setLoading(true);
       _setError(null);
@@ -79,7 +79,7 @@ class AuthController extends ChangeNotifier {
         'phone': phone.trim(),
         'address': address.trim(),
         'role': role,
-        'profileImageBase64': profileImageBase64 ?? '',
+        'profileImageBase64': profileImageBase64,
       });
 
       _setLoading(false);

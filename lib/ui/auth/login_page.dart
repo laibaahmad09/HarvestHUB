@@ -159,12 +159,11 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   Consumer<AuthController>(
                     builder: (context, authController, child) {
-                      return authController.isLoading
-                          ? CircularProgressIndicator()
-                          : RoundButton(
-                              title: 'Login',
-                              onTap: handleLogin,
-                            );
+                      return RoundButton(
+                        title: 'Login',
+                        onTap: authController.isLoading ? null : handleLogin,
+                        isLoading: authController.isLoading,
+                      );
                     },
                   ),
                   const Padding(
