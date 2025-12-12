@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (role == 'Seller') {
         AppRoutes.navigateAndClearStack(context, AppRoutes.sellerDashboard);
       } else if (role == 'Buyer') {
-        AppRoutes.navigateAndClearStack(context, AppRoutes.buyerRentMachinery);
+        AppRoutes.navigateAndClearStack(context, AppRoutes.buyerDashboard);
       } else if (role == 'Labourer') {
         AppRoutes.navigateAndClearStack(context, AppRoutes.findLabour);
       } else {

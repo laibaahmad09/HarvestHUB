@@ -9,7 +9,7 @@ import '../ui/SellerDashBord/hire_labour/hire_labour_screen.dart';
 import '../ui/SellerDashBord/rent_machinery/rent_machinery_screen.dart';
 import '../ui/SellerDashBord/sell_product/sell_product_screen.dart';
 import '../ui/SellerDashBord/add_products/add_product.dart';
-import '../ui/BuyerDashbord/buyer_rent_machinery.dart';
+import '../ui/BuyerDashbord/buyer_dashboard.dart';
 import '../ui/SellerDashBord/add_products/add_machinory.dart';
 
 class AppRoutes {
@@ -22,7 +22,7 @@ class AppRoutes {
   static const String findLabour = '/find-labour';
   static const String rentMachinery = '/rent-machinery';
   static const String sellProduct = '/sell-product';
-  static const String buyerRentMachinery = '/buyer-rent-machinery';
+  static const String buyerDashboard = '/buyer-dashboard';
   static const String addProduct = '/add-product';
   static const String addMachinery = '/add-machinery';
 
@@ -36,7 +36,7 @@ class AppRoutes {
         findLabour: (context) => HireLabourDashboard(),
         rentMachinery: (context) => RentDashboard(),
         sellProduct: (context) => SellDashboard(),
-        buyerRentMachinery: (context) => BuyerRentDashboard(),
+        buyerDashboard: (context) => BuyerDashboard(),
         addProduct: (context) => AddProduct(),
         addMachinery: (context) => AddMachinery(),
       };
