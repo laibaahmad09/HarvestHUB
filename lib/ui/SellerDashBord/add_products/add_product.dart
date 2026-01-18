@@ -24,9 +24,10 @@ class _AddProductState extends State<AddProduct> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Product", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.green[700],
+        title: const Text("Add Product", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF2E5E25),
         centerTitle: true,
+        elevation: 0,
       ),
       body: Container(
         width: double.infinity,
@@ -40,14 +41,21 @@ class _AddProductState extends State<AddProduct> {
             children: [
               // Product Type Card
               Card(
-                elevation: 2,
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Product Type", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.category, color: const Color(0xFF2E5E25), size: 20),
+                          const SizedBox(width: 8),
+                          const Text("Product Type", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         value: productType,
                         items: ['Crop', 'Seed'].map((type) =>
@@ -57,9 +65,13 @@ class _AddProductState extends State<AddProduct> {
                           productType = val;
                           selectedCrop = null;
                         }),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         ),
                         validator: (val) => val == null ? "Please select type" : null,
                       ),
@@ -82,14 +94,22 @@ class _AddProductState extends State<AddProduct> {
                   return ElevatedButton(
                     onPressed: productController.isLoading ? null : _submitProduct,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
+                      backgroundColor: const Color(0xFF2E5E25),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 3,
                     ),
                     child: productController.isLoading
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : const Text("Add Product", style: TextStyle(fontSize: 16)),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text("Add Product", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                   );
                 },
               ),
@@ -149,14 +169,21 @@ class _AddProductState extends State<AddProduct> {
 
   Widget _buildCropCard() {
     return Card(
-      elevation: 2,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Crop Details", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.agriculture, color: const Color(0xFF2E5E25), size: 20),
+                const SizedBox(width: 8),
+                const Text("Crop Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             DropdownButtonFormField<String>(
               value: selectedCrop,
@@ -164,34 +191,46 @@ class _AddProductState extends State<AddProduct> {
                   DropdownMenuItem(value: crop, child: Text(crop))
               ).toList(),
               onChanged: (val) => setState(() => selectedCrop = val),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Select Crop",
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                ),
               ),
               validator: (val) => val == null ? "Select a crop" : null,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextFormField(
               controller: priceController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Price per KG",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: "Price per KG (Rs.)",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                ),
               ),
               validator: (val) => val?.isEmpty == true ? "Price is required" : null,
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: stockController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Stock",
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                      ),
                     ),
                     validator: (val) => val?.isEmpty == true ? "Stock is required" : null,
                   ),
@@ -200,21 +239,25 @@ class _AddProductState extends State<AddProduct> {
                 Expanded(child: _buildDropdown("Unit", ["KG", "Ton"], (val) => unit = val)),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: locationController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Location",
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                      ),
                     ),
                     validator: (val) => val?.isEmpty == true ? "Location is required" : null,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildDropdown("Quality", ["A", "B", "C", "Organic"], (val) => quality = val)),
+                Expanded(child: _buildDropdown("Quality", ["A", "B", "Organic"], (val) => quality = val)),
               ],
             ),
           ],
@@ -225,34 +268,49 @@ class _AddProductState extends State<AddProduct> {
 
   Widget _buildSeedCard() {
     return Card(
-      elevation: 2,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Seed Details", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.eco, color: const Color(0xFF2E5E25), size: 20),
+                const SizedBox(width: 8),
+                const Text("Seed Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+              ],
+            ),
+            const SizedBox(height: 16),
             TextFormField(
               controller: seedNameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Seed Name",
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                ),
               ),
               validator: (val) => val?.isEmpty == true ? "Seed Name is required" : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             _buildDropdown("Variety", ["Hybrid 999", "Galaxy 2013", "Punjab 2011"], (val) => variety = val),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: priceController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Price per KG",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: "Price per KG (Rs.)",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                      ),
                     ),
                     validator: (val) => val?.isEmpty == true ? "Price is required" : null,
                   ),
@@ -262,16 +320,20 @@ class _AddProductState extends State<AddProduct> {
                   child: TextFormField(
                     controller: stockController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Stock",
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                      ),
                     ),
                     validator: (val) => val?.isEmpty == true ? "Stock is required" : null,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(child: _buildDropdown("Unit", ["KG", "Ton"], (val) => unit = val)),
@@ -279,17 +341,21 @@ class _AddProductState extends State<AddProduct> {
                 Expanded(
                   child: TextFormField(
                     controller: locationController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "Location",
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+                      ),
                     ),
                     validator: (val) => val?.isEmpty == true ? "Location is required" : null,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildDropdown("Quality", ["A", "B", "C", "Organic"], (val) => quality = val),
+            const SizedBox(height: 16),
+            _buildDropdown("Quality", ["A", "B", "Organic"], (val) => quality = val),
           ],
         ),
       ),
@@ -309,7 +375,11 @@ class _AddProductState extends State<AddProduct> {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF2E5E25), width: 2),
+        ),
       ),
       items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
       onChanged: onChanged,

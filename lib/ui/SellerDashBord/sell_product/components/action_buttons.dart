@@ -33,7 +33,7 @@ class ActionButtons extends StatelessWidget {
         SizedBox(width: 12),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () => AppRoutes.navigateTo(context, AppRoutes.sellerOrders),
             icon: Icon(Icons.list_alt, color: Colors.green[700]),
             label: Text(
               'View Orders',

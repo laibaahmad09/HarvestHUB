@@ -118,7 +118,7 @@ class _AddMachineryState extends State<AddMachinery> {
 
                 _buildTextField(
                   controller: priceController,
-                  label: 'Price per Day (PKR)',
+                  label: 'Price per Day (Rs.)',
                   icon: Icons.attach_money,
                   keyboardType: TextInputType.number,
                   validator: (value) => value?.isEmpty == true ? 'Price is required' : null,

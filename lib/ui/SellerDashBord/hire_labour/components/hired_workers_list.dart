@@ -228,7 +228,7 @@ class HiredWorkersList extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        '₹${worker['dailyRate']}/day',
+                        'Rs. ${worker['dailyRate']}/day',
                         style: TextStyle(
                           color: Colors.green[700],
                           fontWeight: FontWeight.bold,

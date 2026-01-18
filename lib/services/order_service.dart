@@ -43,39 +43,11 @@ class OrderService {
       
       print('Creating order with data: $orderData');
       
-      // Add order to orders collection first
+      // Add order to orders collection (stock will be reduced when seller accepts)
       final docRef = await _firestore.collection('orders').add(orderData);
       print('Order created successfully with ID: ${docRef.id}');
       
-      // Then update stock separately
-      try {
-        final itemRef = _firestore.collection(orderType).doc(itemId);
-        final itemSnapshot = await itemRef.get();
-        
-        if (itemSnapshot.exists) {
-          final currentItemData = itemSnapshot.data() as Map<String, dynamic>;
-          final currentItemStock = int.tryParse(currentItemData['stock']?.toString() ?? '0') ?? 0;
-          final newStock = currentItemStock - quantity;
-          
-          print('Updating stock for $itemId: $currentItemStock -> $newStock');
-          
-          if (newStock <= 0) {
-            await itemRef.update({
-              'stock': '0',
-              'status': 'Out of Stock',
-              'availability': 'unavailable'
-            });
-            print('Item marked as out of stock');
-          } else {
-            await itemRef.update({'stock': newStock.toString()});
-          }
-          print('Stock updated successfully');
-        } else {
-          print('Item document not found: $itemId');
-        }
-      } catch (e) {
-        print('Error updating stock: $e');
-      }
+      // Don't reduce stock here - it will be reduced when seller accepts the order
       
       return docRef.id;
     } catch (e) {
@@ -139,7 +111,7 @@ class OrderService {
         'totalAmount': totalAmount,
         'startDate': Timestamp.fromDate(startDate),
         'endDate': Timestamp.fromDate(endDate),
-        'status': 'confirmed',
+        'status': 'pending',
         'requestDate': FieldValue.serverTimestamp(),
         'machineryData': machineryData,
       };
@@ -148,17 +120,7 @@ class OrderService {
       final docRef = await _firestore.collection('rentals').add(rentalData);
       print('Rental created with ID: ${docRef.id}');
       
-      // Update machinery availability
-      try {
-        await _firestore.collection('machinery').doc(machineryId).update({
-          'availability': 'rented',
-          'rentedUntil': Timestamp.fromDate(endDate),
-          'currentRentalId': docRef.id,
-        });
-        print('Machinery availability updated to rented');
-      } catch (e) {
-        print('Error updating machinery availability: $e');
-      }
+      // Don't update machinery availability here - it will be updated when seller accepts the rental
       
       return docRef.id;
     } catch (e) {
@@ -248,11 +210,12 @@ class OrderService {
   // Update order status
   static Future<bool> updateOrderStatus(String orderId, String status) async {
     try {
-      // If cancelling order, restore stock
-      if (status.toLowerCase() == 'cancelled' || status.toLowerCase() == 'rejected') {
-        return await _restoreStockAndUpdateStatus(orderId, status);
+      // If accepting order, reduce stock
+      if (status.toLowerCase() == 'confirmed' || status.toLowerCase() == 'accepted') {
+        return await _reduceStockAndUpdateStatus(orderId, status);
       }
       
+      // For other status updates (rejected, cancelled, etc.)
       await _firestore.collection('orders').doc(orderId).update({
         'status': status,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -264,8 +227,8 @@ class OrderService {
     }
   }
   
-  // Restore stock when order is cancelled/rejected
-  static Future<bool> _restoreStockAndUpdateStatus(String orderId, String status) async {
+  // Reduce stock when order is accepted
+  static Future<bool> _reduceStockAndUpdateStatus(String orderId, String status) async {
     try {
       return await _firestore.runTransaction<bool>((transaction) async {
         // Get order document
@@ -288,10 +251,24 @@ class OrderService {
         if (itemSnapshot.exists) {
           final itemData = itemSnapshot.data() as Map<String, dynamic>;
           final currentStock = int.tryParse(itemData['stock']?.toString() ?? '0') ?? 0;
-          final newStock = currentStock + quantity;
           
-          // Restore stock
-          transaction.update(itemRef, {'stock': newStock});
+          // Check if enough stock is available
+          if (currentStock < quantity) {
+            throw Exception('Insufficient stock. Only $currentStock KG available.');
+          }
+          
+          final newStock = currentStock - quantity;
+          
+          // Reduce stock
+          if (newStock <= 0) {
+            transaction.update(itemRef, {
+              'stock': '0',
+              'status': 'Out of Stock',
+              'availability': 'unavailable'
+            });
+          } else {
+            transaction.update(itemRef, {'stock': newStock.toString()});
+          }
         }
         
         // Update order status
@@ -303,7 +280,7 @@ class OrderService {
         return true;
       });
     } catch (e) {
-      print('Error restoring stock and updating status: $e');
+      print('Error reducing stock and updating status: $e');
       return false;
     }
   }
@@ -311,11 +288,17 @@ class OrderService {
   // Update rental status
   static Future<bool> updateRentalStatus(String rentalId, String status) async {
     try {
+      // If accepting rental, update machinery availability
+      if (status.toLowerCase() == 'confirmed' || status.toLowerCase() == 'accepted') {
+        return await _updateMachineryAvailabilityAndStatus(rentalId, status);
+      }
+      
       // If completing or cancelling rental, restore machinery availability
       if (status.toLowerCase() == 'completed' || status.toLowerCase() == 'cancelled') {
         return await _restoreMachineryAvailability(rentalId, status);
       }
       
+      // For other status updates (rejected, etc.)
       await _firestore.collection('rentals').doc(rentalId).update({
         'status': status,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -323,6 +306,49 @@ class OrderService {
       return true;
     } catch (e) {
       print('Error updating rental status: $e');
+      return false;
+    }
+  }
+  
+  // Update machinery availability when rental is accepted
+  static Future<bool> _updateMachineryAvailabilityAndStatus(String rentalId, String status) async {
+    try {
+      return await _firestore.runTransaction<bool>((transaction) async {
+        // Get rental document
+        final rentalRef = _firestore.collection('rentals').doc(rentalId);
+        final rentalSnapshot = await transaction.get(rentalRef);
+        
+        if (!rentalSnapshot.exists) {
+          throw Exception('Rental not found');
+        }
+        
+        final rentalData = rentalSnapshot.data() as Map<String, dynamic>;
+        final machineryId = rentalData['machineryId'];
+        final endDate = rentalData['endDate'] as Timestamp?;
+        
+        // Get machinery document
+        final machineryRef = _firestore.collection('machinery').doc(machineryId);
+        final machinerySnapshot = await transaction.get(machineryRef);
+        
+        if (machinerySnapshot.exists) {
+          // Update machinery availability to rented
+          transaction.update(machineryRef, {
+            'availability': 'rented',
+            'rentedUntil': endDate,
+            'currentRentalId': rentalId,
+          });
+        }
+        
+        // Update rental status
+        transaction.update(rentalRef, {
+          'status': status,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        
+        return true;
+      });
+    } catch (e) {
+      print('Error updating machinery availability and status: $e');
       return false;
     }
   }

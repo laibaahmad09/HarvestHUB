@@ -124,7 +124,7 @@ class AvailableWorkersList extends StatelessWidget {
                 Text(labourer['location'], style: TextStyle(color: Colors.grey[600])),
                 Spacer(),
                 Text(
-                  '₹${labourer['dailyRate']}/day',
+                  'Rs. ${labourer['dailyRate']}/day',
                   style: TextStyle(
                     color: Colors.green[700],
                     fontWeight: FontWeight.bold,

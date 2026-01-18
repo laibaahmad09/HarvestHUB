@@ -76,7 +76,7 @@ class ProductCard extends StatelessWidget {
           children: [
             SizedBox(height: 4),
             Text(
-              'Price: ₹$price per $unit',
+              'Price: Rs. ${price.contains('.') ? price.split('.')[0] : price} per $unit',
               style: TextStyle(
                 color: Colors.green[700],
                 fontWeight: FontWeight.bold,

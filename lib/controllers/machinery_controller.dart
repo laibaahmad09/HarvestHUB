@@ -126,6 +126,20 @@ class MachineryController extends ChangeNotifier {
   }
 
   int getTotalCount() => _machinery.length;
-  int getAvailableCount() => _machinery.where((m) => m['isAvailable'] == true).length;
-  int getRentedCount() => _machinery.where((m) => m['isAvailable'] == false).length;
+  
+  int getAvailableCount() {
+    return _machinery.where((m) {
+      final data = m.data() as Map<String, dynamic>;
+      final availability = data['availability']?.toString().toLowerCase() ?? 'available';
+      return availability == 'available' && (data['isAvailable'] == true);
+    }).length;
+  }
+  
+  int getRentedCount() {
+    return _machinery.where((m) {
+      final data = m.data() as Map<String, dynamic>;
+      final availability = data['availability']?.toString().toLowerCase() ?? 'available';
+      return availability == 'rented';
+    }).length;
+  }
 }

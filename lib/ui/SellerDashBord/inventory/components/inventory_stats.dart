@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class InventoryStats extends StatelessWidget {
   @override
@@ -8,24 +10,134 @@ class InventoryStats extends StatelessWidget {
         // First row - 2 cards
         Row(
           children: [
-            _buildStatCard('Total Products', '45', Icons.inventory, Colors.blue),
+            _buildTotalOrdersCard(),
             SizedBox(width: 12),
-            _buildStatCard('Total Earnings', '₹85,000', Icons.account_balance_wallet, Colors.green),
+            _buildTotalEarningsCard(),
           ],
         ),
         SizedBox(height: 12),
         // Second row - 2 cards
         Row(
           children: [
-            _buildStatCard('This Month', '₹12,500', Icons.calendar_month, Colors.orange),
+            _buildTodayEarningsCard(),
             SizedBox(width: 12),
-            _buildStatCard('Hired Workers', '8', Icons.people, Colors.purple),
+_buildHiredWorkersCard(),
           ],
         ),
         SizedBox(height: 12),
         // Third row - 1 card
-        _buildStatCard('Rental Products', '12', Icons.agriculture, Colors.teal),
+        Row(
+          children: [
+            Expanded(child: _buildRentedMachineryCard()),
+          ],
+        ),
       ],
+    );
+  }
+
+  Widget _buildTotalOrdersCard() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return _buildStatCard('Total Orders', '0', Icons.inventory, Colors.blue);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('orders').where('sellerId', isEqualTo: user.uid).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return _buildStatCard('Total Orders', '...', Icons.inventory, Colors.blue);
+        }
+        
+        final ordersCount = snapshot.data!.docs.length;
+        return _buildStatCard('Total Orders', ordersCount.toString(), Icons.inventory, Colors.blue);
+      },
+    );
+  }
+
+  Widget _buildTotalEarningsCard() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return _buildStatCard('Total Earnings', 'Rs. 0', Icons.account_balance_wallet, Colors.green);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('orders').where('sellerId', isEqualTo: user.uid).where('status', isEqualTo: 'confirmed').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return _buildStatCard('Total Earnings', 'Rs. ...', Icons.account_balance_wallet, Colors.green);
+        }
+        
+        int totalEarnings = 0;
+        
+        for (var doc in snapshot.data!.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final amount = data['totalAmount'];
+          if (amount is num) {
+            totalEarnings += amount.toInt();
+          }
+        }
+        
+        return _buildStatCard('Total Earnings', 'Rs. $totalEarnings', Icons.account_balance_wallet, Colors.green);
+      },
+    );
+  }
+
+  Widget _buildTodayEarningsCard() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return _buildStatCard('Today Earning', 'Rs. 0', Icons.today, Colors.orange);
+    }
+
+    return _buildStatCard('Today Earning', 'Rs. 0', Icons.today, Colors.orange);
+  }
+
+  Widget _buildHiredWorkersCard() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return _buildStatCard('Hired Workers', '0', Icons.people, Colors.purple);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('labour')
+          .where('sellerId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'hired')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return _buildStatCard('Hired Workers', '...', Icons.people, Colors.purple);
+        }
+        
+        final hiredCount = snapshot.data!.docs.length;
+        return _buildStatCard('Hired Workers', hiredCount.toString(), Icons.people, Colors.purple);
+      },
+    );
+  }
+
+  Widget _buildRentedMachineryCard() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return _buildStatCard('Rented Machinery', '0', Icons.agriculture, Colors.teal);
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('machinery')
+          .where('userId', isEqualTo: user.uid)
+          .where('availability', isEqualTo: 'rented')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return _buildStatCard('Rented Machinery', '0', Icons.agriculture, Colors.teal);
+        }
+
+        if (!snapshot.hasData) {
+          return _buildStatCard('Rented Machinery', '...', Icons.agriculture, Colors.teal);
+        }
+
+        final rentedCount = snapshot.data!.docs.length;
+        return _buildStatCard('Rented Machinery', rentedCount.toString(), Icons.agriculture, Colors.teal);
+      },
     );
   }
 

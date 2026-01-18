@@ -13,6 +13,7 @@ class MachineryCard extends StatelessWidget {
     final location = data['location'] ?? 'Unknown';
     final imageBase64 = data['imageBase64'] ?? '';
     final available = data['isAvailable'] ?? false;
+    final availability = data['availability']?.toString().toLowerCase() ?? 'available';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12),
@@ -61,7 +62,7 @@ class MachineryCard extends StatelessWidget {
                   style: TextStyle(color: Colors.grey[600]),
                 ),
                 Text(
-                  'Price/Day: ₹$price',
+                  'Price/Day: Rs. ${price.contains('.') ? price.split('.')[0] : price}',
                   style: TextStyle(
                     color: Colors.green[800],
                     fontWeight: FontWeight.w600,
@@ -71,13 +72,13 @@ class MachineryCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: available ? Colors.green[50] : Colors.red[50],
+                    color: availability == 'rented' ? Colors.orange[50] : (available ? Colors.green[50] : Colors.red[50]),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    available ? 'Available for Rent' : 'Not Available',
+                    availability == 'rented' ? 'Rented' : (available ? 'Available for Rent' : 'Not Available'),
                     style: TextStyle(
-                      color: available ? Colors.green : Colors.red,
+                      color: availability == 'rented' ? Colors.orange : (available ? Colors.green : Colors.red),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),

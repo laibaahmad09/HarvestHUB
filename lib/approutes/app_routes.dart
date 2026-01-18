@@ -11,6 +11,7 @@ import '../ui/SellerDashBord/sell_product/sell_product_screen.dart';
 import '../ui/SellerDashBord/add_products/add_product.dart';
 import '../ui/BuyerDashbord/buyer_dashboard.dart';
 import '../ui/SellerDashBord/add_products/add_machinory.dart';
+import '../ui/SellerDashBord/seller_orders/seller_orders.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String buyerDashboard = '/buyer-dashboard';
   static const String addProduct = '/add-product';
   static const String addMachinery = '/add-machinery';
+  static const String sellerOrders = '/seller-orders';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => SplashScreen(),
@@ -39,6 +41,7 @@ class AppRoutes {
         buyerDashboard: (context) => BuyerDashboard(),
         addProduct: (context) => AddProduct(),
         addMachinery: (context) => AddMachinery(),
+        sellerOrders: (context) => SellerOrders(),
       };
 
   static void navigateTo(BuildContext context, String routeName) {

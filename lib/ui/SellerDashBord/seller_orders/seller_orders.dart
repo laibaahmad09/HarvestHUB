@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../services/order_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../utils/app_colors.dart';
+import '../../../services/order_service.dart';
 
-class BuyerOrders extends StatefulWidget {
-  const BuyerOrders({super.key});
+class SellerOrders extends StatefulWidget {
+  const SellerOrders({super.key});
 
   @override
-  State<BuyerOrders> createState() => _BuyerOrdersState();
+  State<SellerOrders> createState() => _SellerOrdersState();
 }
 
-class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStateMixin {
+class _SellerOrdersState extends State<SellerOrders> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -27,88 +28,67 @@ class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: AppColors.backgroundDecoration,
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.white,
-                  Colors.grey[50]!,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Orders', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF2E5E25),
+        centerTitle: true,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: AppColors.backgroundDecoration,
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              child: TabBar(
+                controller: _tabController,
+                labelColor: const Color(0xFF2E5E25),
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: const Color(0xFF2E5E25),
+                tabs: const [
+                  Tab(text: 'Product Orders'),
+                  Tab(text: 'Machinery Rentals'),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Text(
-                    'My Orders',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E5E25),
-                    ),
-                  ),
-                ),
-                TabBar(
-                  controller: _tabController,
-                  labelColor: const Color(0xFF2E5E25),
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: const Color(0xFF2E5E25),
-                  tabs: const [
-                    Tab(text: 'Product Orders'),
-                    Tab(text: 'Machinery Rentals'),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildProductOrders(),
+                  _buildMachineryRentals(),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOrdersList(),
-                _buildRentalsList(),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildOrdersList() {
+  Widget _buildProductOrders() {
+    final sellerId = FirebaseAuth.instance.currentUser?.uid;
+    if (sellerId == null) return const Center(child: Text('Please login'));
+
     return StreamBuilder<QuerySnapshot>(
-      stream: OrderService.getBuyerOrders(),
+      stream: OrderService.getSellerOrders(),
       builder: (context, snapshot) {
-        print('Orders stream state: ${snapshot.connectionState}');
-        print('Has data: ${snapshot.hasData}');
-        print('Docs count: ${snapshot.data?.docs.length ?? 0}');
-        
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.hasError) {
-          print('Orders stream error: ${snapshot.error}');
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyState('No orders found', Icons.shopping_cart_outlined);
+          return _buildEmptyState('No product orders yet', Icons.shopping_cart_outlined);
         }
 
         return ListView.builder(
@@ -124,16 +104,19 @@ class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildRentalsList() {
+  Widget _buildMachineryRentals() {
+    final sellerId = FirebaseAuth.instance.currentUser?.uid;
+    if (sellerId == null) return const Center(child: Text('Please login'));
+
     return StreamBuilder<QuerySnapshot>(
-      stream: OrderService.getBuyerRentals(),
+      stream: OrderService.getSellerRentals(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return _buildEmptyState('No rental requests found', Icons.agriculture_outlined);
+          return _buildEmptyState('No rental requests yet', Icons.agriculture_outlined);
         }
 
         return ListView.builder(
@@ -217,6 +200,34 @@ class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStat
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: status == 'pending' ? () => _updateOrderStatus(orderId, 'confirmed') : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E5E25),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(status == 'pending' ? 'Accept' : 'Accepted'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: status == 'pending' ? () => _updateOrderStatus(orderId, 'rejected') : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(status == 'pending' ? 'Reject' : 'Rejected'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -300,6 +311,34 @@ class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStat
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: status == 'pending' ? () => _updateRentalStatus(rentalId, 'confirmed') : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E5E25),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(status == 'pending' ? 'Accept' : 'Accepted'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: status == 'pending' ? () => _updateRentalStatus(rentalId, 'rejected') : null,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(status == 'pending' ? 'Reject' : 'Rejected'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -319,9 +358,6 @@ class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStat
       case 'rejected':
       case 'cancelled':
         color = Colors.red;
-        break;
-      case 'completed':
-        color = Colors.blue;
         break;
       default:
         color = Colors.grey;
@@ -359,5 +395,33 @@ class _BuyerOrdersState extends State<BuyerOrders> with SingleTickerProviderStat
         ],
       ),
     );
+  }
+
+  Future<void> _updateOrderStatus(String orderId, String status) async {
+    final success = await OrderService.updateOrderStatus(orderId, status);
+    
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Order $status successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating order')),
+      );
+    }
+  }
+
+  Future<void> _updateRentalStatus(String rentalId, String status) async {
+    final success = await OrderService.updateRentalStatus(rentalId, status);
+    
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rental request $status successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating rental')),
+      );
+    }
   }
 }
