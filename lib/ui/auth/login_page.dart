@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
         } else if (role == 'Buyer') {
           AppRoutes.navigateAndClearStack(context, AppRoutes.buyerDashboard);
         } else if (role == 'Labourer') {
-          AppRoutes.navigateAndClearStack(context, AppRoutes.findLabour);
+          AppRoutes.navigateAndClearStack(context, AppRoutes.labourDashboard);
         }
       } else {
         AppUtils.showSnackBar(context, authController.errorMessage ?? 'Login failed', isError: true);

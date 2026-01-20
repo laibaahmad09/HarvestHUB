@@ -8,6 +8,7 @@ import 'controllers/product_controller.dart';
 import 'controllers/machinery_controller.dart';
 import 'controllers/user_controller.dart';
 import 'controllers/buyer_controller.dart';
+import 'controllers/labour_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MachineryController()),
         ChangeNotifierProvider(create: (_) => UserController()),
         ChangeNotifierProvider(create: (_) => BuyerController()),
+        ChangeNotifierProvider(create: (_) => LabourController()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

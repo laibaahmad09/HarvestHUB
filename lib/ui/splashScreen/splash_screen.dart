@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else if (role == 'Buyer') {
         AppRoutes.navigateAndClearStack(context, AppRoutes.buyerDashboard);
       } else if (role == 'Labourer') {
-        AppRoutes.navigateAndClearStack(context, AppRoutes.findLabour);
+        AppRoutes.navigateAndClearStack(context, AppRoutes.labourDashboard);
       } else {
         AppRoutes.navigateAndReplace(context, AppRoutes.login);
       }

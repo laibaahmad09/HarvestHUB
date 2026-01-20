@@ -1,64 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../services/auth_service.dart';
 
 class HiredWorkersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final hiredWorkers = [
-      {
-        'name': 'Ali Khan',
-        'skill': 'Crop Specialist', 
-        'rating': 4.7,
-        'location': 'Multan',
-        'dailyRate': '2200',
-        'hireDate': '15 Dec 2024',
-        'status': 'Working',
-      },
-    ];
+    return StreamBuilder<QuerySnapshot>(
+      stream: _getHiredWorkersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (hiredWorkers.isEmpty) {
-      return Container(
-        padding: EdgeInsets.all(40),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.work_off, size: 60, color: Colors.grey[400]),
-              SizedBox(height: 16),
-              Text(
-                'No hired workers yet',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                ),
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(40),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.work_off, size: 60, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No hired workers yet',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Hire workers from Available tab',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 8),
-              Text(
-                'Hire workers from Available tab',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[500],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+            ),
+          );
+        }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: hiredWorkers.length,
-      itemBuilder: (context, index) {
-        final worker = hiredWorkers[index];
-        return _buildHiredWorkerCard(worker);
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final doc = snapshot.data!.docs[index];
+            final request = doc.data() as Map<String, dynamic>;
+            return _buildHiredWorkerCard(request);
+          },
+        );
       },
     );
   }
 
-  Widget _buildHiredWorkerCard(Map<String, dynamic> worker) {
+  Stream<QuerySnapshot> _getHiredWorkersStream() async* {
+    final sellerId = await AuthService.getUserId();
+    if (sellerId == null) return;
+    
+    yield* FirebaseFirestore.instance
+        .collection('hire_requests')
+        .where('sellerId', isEqualTo: sellerId)
+        .where('status', isEqualTo: 'accepted')
+        .snapshots();
+  }
+
+  Widget _buildHiredWorkerCard(Map<String, dynamic> request) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -66,19 +77,19 @@ class HiredWorkersList extends StatelessWidget {
           BoxShadow(
             color: Colors.green.withOpacity(0.1),
             blurRadius: 20,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
         border: Border.all(color: Colors.green.withOpacity(0.1)),
       ),
       child: Padding(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(3),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.green[400]!, Colors.green[600]!],
@@ -91,28 +102,28 @@ class HiredWorkersList extends StatelessWidget {
                     child: Icon(Icons.person, color: Colors.green[700], size: 32),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        worker['name'],
+                        request['labourName'] ?? 'Unknown Worker',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey[800],
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.green[50],
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          worker['skill'],
+                          request['duration'] ?? 'Duration not specified',
                           style: TextStyle(
                             color: Colors.green[700],
                             fontWeight: FontWeight.w600,
@@ -124,7 +135,7 @@ class HiredWorkersList extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.green[50],
                     borderRadius: BorderRadius.circular(20),
@@ -141,9 +152,9 @@ class HiredWorkersList extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
-                        worker['status'],
+                        'Working',
                         style: TextStyle(
                           color: Colors.green[700],
                           fontWeight: FontWeight.w600,
@@ -155,72 +166,79 @@ class HiredWorkersList extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.grey[50],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        SizedBox(width: 4),
-                        Text(
-                          '${worker['rating']}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                            fontSize: 11,
+                  if (request['description'] != null && request['description'].isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.description, color: Colors.blue, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              request['description'],
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(Icons.calendar_today, color: Colors.green, size: 18),
-                        SizedBox(width: 4),
-                        Text(
-                          worker['hireDate'],
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[700],
-                            fontSize: 11,
-                          ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today, color: Colors.green, size: 18),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDate(request['requestedAt']),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.red, size: 18),
-                        SizedBox(width: 4),
-                        Text(
-                          worker['location'],
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[700],
-                            fontSize: 11,
-                          ),
+                      ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.access_time, color: Colors.orange, size: 18),
+                            const SizedBox(width: 4),
+                            Text(
+                              request['duration'] ?? 'N/A',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.green[50],
                       borderRadius: BorderRadius.circular(12),
@@ -228,7 +246,7 @@ class HiredWorkersList extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'Rs. ${worker['dailyRate']}/day',
+                        'Rs. ${request['dailyRate'] ?? 0}/day',
                         style: TextStyle(
                           color: Colors.green[700],
                           fontWeight: FontWeight.bold,
@@ -238,23 +256,25 @@ class HiredWorkersList extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // TODO: Add call functionality or worker details
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green[600],
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.phone, size: 18),
+                        Icon(Icons.info, size: 18),
                         SizedBox(width: 6),
                         Text(
-                          'Call',
+                          'Details',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ],
@@ -267,5 +287,15 @@ class HiredWorkersList extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDate(dynamic timestamp) {
+    if (timestamp == null) return 'Unknown';
+    try {
+      final date = timestamp.toDate();
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Unknown';
+    }
   }
 }

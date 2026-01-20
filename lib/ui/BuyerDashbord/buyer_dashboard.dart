@@ -2,10 +2,9 @@ import 'package:first_project/approutes/app_routes.dart';
 import 'rent_machinery/buyer_rent_machinery.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
 import '../../controllers/user_controller.dart';
 import '../../controllers/buyer_controller.dart';
-import '../../approutes/app_routes.dart';
+import '../../utils/profile_utils.dart';
 import 'buy_crops_seeds/buyer_crops_seeds.dart';
 import 'buyer_favorites/buyer_favorites.dart';
 import 'buyer_orders/buyer_orders.dart';
@@ -123,7 +122,7 @@ class _BuyerDashboardState extends State<BuyerDashboard> {
                   child: CircleAvatar(
                     radius: 17,
                     backgroundColor: Colors.white,
-                    child: _buildProfileImage(userController),
+                    child: ProfileUtils.buildProfileImage(userController.userData),
                   ),
                 ),
               );
@@ -178,40 +177,5 @@ class _BuyerDashboardState extends State<BuyerDashboard> {
       default:
         return 'Buyer Dashboard';
     }
-  }
-
-  Widget _buildProfileImage(UserController userController) {
-    final profileImageBase64 = userController.userData?['profileImageBase64'] ?? '';
-    
-    if (profileImageBase64.isNotEmpty) {
-      try {
-        return ClipOval(
-          child: Image.memory(
-            base64Decode(profileImageBase64),
-            width: 35,
-            height: 35,
-            fit: BoxFit.cover,
-          ),
-        );
-      } catch (e) {
-        print('Error decoding profile image: $e');
-      }
-    }
-    
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [Colors.green[400]!, Colors.green[600]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: const Icon(
-        Icons.person,
-        size: 20,
-        color: Colors.white,
-      ),
-    );
   }
 }

@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 
 class DashboardHeader extends StatelessWidget {
-  const DashboardHeader({super.key});
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const DashboardHeader({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +39,7 @@ class DashboardHeader extends StatelessWidget {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.storefront, color: Colors.white, size: 32),
+            child: Icon(icon, color: Colors.white, size: 32),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -42,7 +51,7 @@ class DashboardHeader extends StatelessWidget {
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 Text(
-                  'Seller Dashboard',
+                  title,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -51,7 +60,7 @@ class DashboardHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Manage your agricultural products',
+                  subtitle,
                   style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],

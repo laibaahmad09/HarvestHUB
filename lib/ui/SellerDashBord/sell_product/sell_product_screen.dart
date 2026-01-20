@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../controllers/product_controller.dart';
 import '../../../approutes/app_routes.dart';
 import '../../../utils/app_colors.dart';
-import 'components/dashboard_header.dart';
-import 'components/stat_card.dart';
+import '../../common/dashboard_header.dart';
+import '../../common/stat_card.dart';
 import 'components/action_buttons.dart';
 import 'components/section_header.dart';
 import 'components/product_list.dart';
@@ -37,7 +37,11 @@ class _SellDashboardState extends State<SellDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DashboardHeader(),
+            DashboardHeader(
+              icon: Icons.storefront,
+              title: 'Seller Dashboard',
+              subtitle: 'Manage your agricultural products',
+            ),
             SizedBox(height: 24),
             Consumer<ProductController>(
               builder: (context, productController, child) {

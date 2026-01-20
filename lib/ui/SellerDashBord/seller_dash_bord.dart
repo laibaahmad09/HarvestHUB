@@ -3,11 +3,11 @@ import 'package:first_project/ui/SellerDashBord/hire_labour/hire_labour_screen.d
 import 'package:first_project/ui/SellerDashBord/inventory/inventory_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
 import 'rent_machinery/rent_machinery_screen.dart';
 import 'sell_product/sell_product_screen.dart';
 import 'Helper/custom_drawer.dart';
 import '../../controllers/user_controller.dart';
+import '../../utils/profile_utils.dart';
 
 class SellerDashboard extends StatefulWidget {
   const SellerDashboard({super.key});
@@ -149,7 +149,7 @@ class _SellerDashboardState extends State<SellerDashboard>
                   child: CircleAvatar(
                     radius: 17,
                     backgroundColor: Colors.white,
-                    child: _buildProfileImage(userController),
+                    child: ProfileUtils.buildProfileImage(userController.userData),
                   ),
                 ),
               );
@@ -223,41 +223,6 @@ class _SellerDashboardState extends State<SellerDashboard>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildProfileImage(UserController userController) {
-    final profileImageBase64 = userController.userData?['profileImageBase64'] ?? '';
-    
-    if (profileImageBase64.isNotEmpty) {
-      try {
-        return ClipOval(
-          child: Image.memory(
-            base64Decode(profileImageBase64),
-            width: 35,
-            height: 35,
-            fit: BoxFit.cover,
-          ),
-        );
-      } catch (e) {
-        print('Error decoding profile image: $e');
-      }
-    }
-    
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [Colors.green[400]!, Colors.green[600]!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Icon(
-        Icons.person,
-        size: 20,
-        color: Colors.white,
       ),
     );
   }

@@ -1,5 +1,5 @@
 import 'package:first_project/ui/SellerDashBord/inventory/inventory_screen.dart';
-import 'package:first_project/ui/SellerDashBord/profile_screen.dart';
+import 'package:first_project/ui/common/profile_screen.dart';
 import 'package:first_project/ui/SellerDashBord/seller_dash_bord.dart';
 import 'package:flutter/material.dart';
 import '../ui/splashScreen/splash_screen.dart';
@@ -12,6 +12,7 @@ import '../ui/SellerDashBord/add_products/add_product.dart';
 import '../ui/BuyerDashbord/buyer_dashboard.dart';
 import '../ui/SellerDashBord/add_products/add_machinory.dart';
 import '../ui/SellerDashBord/seller_orders/seller_orders.dart';
+import '../ui/LabourDashboard/labour_dashboard.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -27,6 +28,7 @@ class AppRoutes {
   static const String addProduct = '/add-product';
   static const String addMachinery = '/add-machinery';
   static const String sellerOrders = '/seller-orders';
+  static const String labourDashboard = '/labour-dashboard';
 
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => SplashScreen(),
@@ -42,6 +44,7 @@ class AppRoutes {
         addProduct: (context) => AddProduct(),
         addMachinery: (context) => AddMachinery(),
         sellerOrders: (context) => SellerOrders(),
+        labourDashboard: (context) => LabourDashboard(),
       };
 
   static void navigateTo(BuildContext context, String routeName) {
