@@ -9,6 +9,8 @@ class AppUtils {
 
   // Custom SnackBar
   static void showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    if (!context.mounted) return;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

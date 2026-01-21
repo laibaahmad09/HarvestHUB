@@ -21,11 +21,12 @@ class LabourDashboard extends StatefulWidget {
 
 class _LabourDashboardState extends State<LabourDashboard> {
   int _currentIndex = 0;
+  bool _isInitialized = false;
 
-  final List<Widget> _screens = [
+  List<Widget> get _screens => [
     Consumer<LabourController>(
       builder: (context, labourController, child) {
-        if (labourController.isLoading) {
+        if (!_isInitialized || labourController.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
         
@@ -56,7 +57,9 @@ class _LabourDashboardState extends State<LabourDashboard> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialData();
+    });
   }
 
   Future<void> _loadInitialData() async {
@@ -68,6 +71,12 @@ class _LabourDashboardState extends State<LabourDashboard> {
       labourController.loadLabourProfile(),
       labourController.loadHireRequests(),
     ]);
+    
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   @override

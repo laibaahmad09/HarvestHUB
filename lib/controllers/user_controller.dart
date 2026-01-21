@@ -15,13 +15,21 @@ class UserController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    if (_isLoading != loading) {
+      _isLoading = loading;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
   }
 
   void _setError(String? error) {
-    _errorMessage = error;
-    notifyListeners();
+    if (_errorMessage != error) {
+      _errorMessage = error;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
   }
 
   Future<void> loadUserData() async {

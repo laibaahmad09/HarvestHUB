@@ -51,6 +51,7 @@ class HireRequestsScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 16),
                     elevation: 4,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: const Color(0xFFF1F9F1),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -67,8 +68,12 @@ class HireRequestsScreen extends StatelessWidget {
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                     ),
                                     Text(
-                                      'Duration: ${requestData['duration'] ?? 'Not specified'}',
+                                      'Duration: ${requestData['quantity'] ?? 'Not specified'} ${requestData['durationType'] ?? ''}',
                                       style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                    Text(
+                                      'Amount: Rs. ${requestData['totalAmount']?.toStringAsFixed(0) ?? '0'}',
+                                      style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.bold),
                                     ),
                                   ],
                                 ),
@@ -126,17 +131,6 @@ class HireRequestsScreen extends StatelessWidget {
                           
                           if (requestData['status'] == 'accepted') ...[
                             const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () => _completeJob(context, request.id),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2E5E25),
-                                  foregroundColor: Colors.white,
-                                ),
-                                child: const Text('Mark as Completed'),
-                              ),
-                            ),
                           ],
                         ],
                       ),

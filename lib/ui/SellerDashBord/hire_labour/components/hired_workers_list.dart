@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../services/auth_service.dart';
 
 class HiredWorkersList extends StatelessWidget {
+  const HiredWorkersList({super.key});
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
@@ -49,7 +52,7 @@ class HiredWorkersList extends StatelessWidget {
           itemBuilder: (context, index) {
             final doc = snapshot.data!.docs[index];
             final request = doc.data() as Map<String, dynamic>;
-            return _buildHiredWorkerCard(request);
+            return _buildHiredWorkerCard(context, request);
           },
         );
       },
@@ -63,11 +66,11 @@ class HiredWorkersList extends StatelessWidget {
     yield* FirebaseFirestore.instance
         .collection('hire_requests')
         .where('sellerId', isEqualTo: sellerId)
-        .where('status', isEqualTo: 'accepted')
+        .where('status', whereIn: ['accepted', 'completed'])
         .snapshots();
   }
 
-  Widget _buildHiredWorkerCard(Map<String, dynamic> request) {
+  Widget _buildHiredWorkerCard(BuildContext context, Map<String, dynamic> request) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -123,7 +126,7 @@ class HiredWorkersList extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          request['duration'] ?? 'Duration not specified',
+                          '${request['quantity'] ?? 'N/A'} ${request['durationType'] ?? ''}',
                           style: TextStyle(
                             color: Colors.green[700],
                             fontWeight: FontWeight.w600,
@@ -137,9 +140,9 @@ class HiredWorkersList extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
+                    color: request['status'] == 'completed' ? Colors.blue[50] : Colors.green[50],
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.green[200]!),
+                    border: Border.all(color: request['status'] == 'completed' ? Colors.blue[200]! : Colors.green[200]!),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -148,15 +151,15 @@ class HiredWorkersList extends StatelessWidget {
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: request['status'] == 'completed' ? Colors.blue : Colors.green,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Working',
+                        request['status'] == 'completed' ? 'Completed' : 'Working',
                         style: TextStyle(
-                          color: Colors.green[700],
+                          color: request['status'] == 'completed' ? Colors.blue[700] : Colors.green[700],
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -218,7 +221,7 @@ class HiredWorkersList extends StatelessWidget {
                             Icon(Icons.access_time, color: Colors.orange, size: 18),
                             const SizedBox(width: 4),
                             Text(
-                              request['duration'] ?? 'N/A',
+                              '${request['quantity'] ?? 'N/A'} ${request['durationType'] ?? ''}',
                               style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 color: Colors.grey[700],
@@ -246,7 +249,7 @@ class HiredWorkersList extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        'Rs. ${request['dailyRate'] ?? 0}/day',
+                        'Rs. ${request['totalAmount']?.toStringAsFixed(0) ?? '0'}',
                         style: TextStyle(
                           color: Colors.green[700],
                           fontWeight: FontWeight.bold,
@@ -257,36 +260,176 @@ class HiredWorkersList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Add call functionality or worker details
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[600],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                if (request['status'] == 'completed' && request['rating'] == null)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _showRatingDialog(context, request),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.star, size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'Rate',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.info, size: 18),
-                        SizedBox(width: 6),
-                        Text(
-                          'Details',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                      ],
+                  )
+                else
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => _makePhoneCall(context, request['labourPhone'] ?? ''),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[600],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.phone, size: 18),
+                          SizedBox(width: 6),
+                          Text(
+                            'Contact',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
+    if (phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number not available')),
+      );
+      return;
+    }
+    
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cannot open phone dialer')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  void _showRatingDialog(BuildContext context, Map<String, dynamic> request) {
+    double rating = 5.0;
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Rate ${request['labourName']}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('How was the work quality?'),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return GestureDetector(
+                    onTap: () => setState(() => rating = index + 1.0),
+                    child: Icon(
+                      Icons.star,
+                      size: 40,
+                      color: index < rating ? Colors.amber : Colors.grey[300],
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 8),
+              Text('${rating.toInt()} Star${rating > 1 ? 's' : ''}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => _submitRating(context, request, rating),
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitRating(BuildContext context, Map<String, dynamic> request, double rating) async {
+    try {
+      final labourId = request['labourId'];
+      
+      // Update hire request with rating
+      await FirebaseFirestore.instance
+          .collection('hire_requests')
+          .where('labourId', isEqualTo: labourId)
+          .where('sellerId', isEqualTo: request['sellerId'])
+          .where('status', isEqualTo: 'completed')
+          .get()
+          .then((snapshot) {
+        for (var doc in snapshot.docs) {
+          if (doc.data()['rating'] == null) {
+            doc.reference.update({'rating': rating});
+            break;
+          }
+        }
+      });
+      
+      // Update labour profile rating
+      final labourDoc = await FirebaseFirestore.instance
+          .collection('labour_profiles')
+          .doc(labourId)
+          .get();
+      
+      if (labourDoc.exists) {
+        final currentRating = labourDoc.data()?['rating'] ?? 0.0;
+        final totalJobs = labourDoc.data()?['totalJobs'] ?? 0;
+        final newRating = totalJobs > 0 
+            ? ((currentRating * (totalJobs - 1)) + rating) / totalJobs
+            : rating;
+        
+        await FirebaseFirestore.instance
+            .collection('labour_profiles')
+            .doc(labourId)
+            .update({'rating': newRating});
+      }
+      
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rating submitted successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting rating: $e')),
+      );
+    }
   }
 
   String _formatDate(dynamic timestamp) {

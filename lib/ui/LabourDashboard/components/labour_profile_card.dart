@@ -109,7 +109,7 @@ class LabourProfileCard extends StatelessWidget {
                     Icon(Icons.money, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Text(
-                      'Rs ${profile['dailyRate'] ?? profile['hourlyRate'] ?? 0}/${profile['dailyRate'] != null && profile['dailyRate'] > 0 ? 'day' : 'hour'}',
+                      _getPriceText(profile),
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     const Spacer(),
@@ -168,6 +168,19 @@ class LabourProfileCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _getPriceText(Map<String, dynamic> profile) {
+    final dailyRate = profile['dailyRate'] ?? 0;
+    final hourlyRate = profile['hourlyRate'] ?? 0;
+    
+    if (dailyRate > 0) {
+      return 'Rs $dailyRate/day';
+    } else if (hourlyRate > 0) {
+      return 'Rs $hourlyRate/hour';
+    } else {
+      return 'Rate not set';
+    }
   }
 
   void _deleteProfile(BuildContext context) async {

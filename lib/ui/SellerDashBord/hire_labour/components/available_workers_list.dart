@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../services/auth_service.dart';
 import '../../../../utils/app_utils.dart';
+import 'hire_labour_screen.dart';
 
 class AvailableWorkersList extends StatelessWidget {
   @override
@@ -118,7 +119,7 @@ class AvailableWorkersList extends StatelessWidget {
                 Text(labourer['address'] ?? 'Location not provided', style: TextStyle(color: Colors.grey[600])),
                 const Spacer(),
                 Text(
-                  'Rs. ${labourer['dailyRate'] ?? 0}/day',
+                  _getPriceText(labourer),
                   style: TextStyle(
                     color: Colors.green[700],
                     fontWeight: FontWeight.bold,
@@ -151,7 +152,13 @@ class AvailableWorkersList extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: (labourer['isAvailable'] == true) ? () {
-                  _showHireDialog(context, labourer);
+                  print('Labourer data being passed: $labourer');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HireLabourScreen(labourer: labourer),
+                    ),
+                  );
                 } : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: (labourer['isAvailable'] == true) ? Colors.green[700] : Colors.grey[400],
@@ -171,6 +178,19 @@ class AvailableWorkersList extends StatelessWidget {
     );
   }
 
+  String _getPriceText(Map<String, dynamic> labourer) {
+    final dailyRate = labourer['dailyRate'] ?? 0;
+    final hourlyRate = labourer['hourlyRate'] ?? 0;
+    
+    if (dailyRate > 0) {
+      return 'Rs. $dailyRate/day';
+    } else if (hourlyRate > 0) {
+      return 'Rs. $hourlyRate/hour';
+    } else {
+      return 'Rate not set';
+    }
+  }
+
   void _showHireDialog(BuildContext context, Map<String, dynamic> labourer) {
     final durationController = TextEditingController();
     final descriptionController = TextEditingController();
@@ -178,32 +198,83 @@ class AvailableWorkersList extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Hire ${labourer['name']}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: durationController,
-              decoration: const InputDecoration(
-                labelText: 'Duration (e.g., 5 days)',
-                border: OutlineInputBorder(),
-              ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2E5E25), Color(0xFF4A7A4C)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Work Description',
-                border: OutlineInputBorder(),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.work, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Hire ${labourer['name']}',
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
-              maxLines: 3,
-            ),
-          ],
+            ],
+          ),
+        ),
+        content: Container(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F9F1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF2E5E25).withOpacity(0.2)),
+                ),
+                child: TextField(
+                  controller: durationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (e.g., 5 days)',
+                    labelStyle: TextStyle(color: Color(0xFF2E5E25)),
+                    prefixIcon: Icon(Icons.schedule, color: Color(0xFF2E5E25)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F9F1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF2E5E25).withOpacity(0.2)),
+                ),
+                child: TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Work Description',
+                    labelStyle: TextStyle(color: Color(0xFF2E5E25)),
+                    prefixIcon: Icon(Icons.description, color: Color(0xFF2E5E25)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(16),
+                  ),
+                  maxLines: 3,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.grey[600],
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -212,7 +283,20 @@ class AvailableWorkersList extends StatelessWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Send Request'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E5E25),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.send, size: 18),
+                SizedBox(width: 8),
+                Text('Send Request', style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
           ),
         ],
       ),

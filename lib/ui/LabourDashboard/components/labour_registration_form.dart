@@ -23,7 +23,8 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
   
   List<String> _selectedSkills = [];
   String _availability = 'Full Time';
-  String _paymentType = 'Daily';
+  String _paymentType = 'Per Day';
+  bool _isRegistering = false;
   
   final List<String> _availableSkills = [
     'Crop Harvesting', 'Planting', 'Irrigation', 'Pesticide Application',
@@ -52,10 +53,10 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
         _availability = profile['availability'] ?? 'Full Time';
         
         if (profile['dailyRate'] != null && profile['dailyRate'] > 0) {
-          _paymentType = 'Daily';
+          _paymentType = 'Per Day';
           _rateController.text = profile['dailyRate'].toString();
         } else if (profile['hourlyRate'] != null && profile['hourlyRate'] > 0) {
-          _paymentType = 'Hourly';
+          _paymentType = 'Per Hour';
           _rateController.text = profile['hourlyRate'].toString();
         }
       });
@@ -65,13 +66,7 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEditing ? "Edit Profile" : "Labour Registration", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF2E5E25),
-        centerTitle: true,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+      
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -105,29 +100,29 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
                 const SizedBox(height: 24),
                 
                 // Submit Button
-                Consumer<LabourController>(
-                  builder: (context, labourController, child) {
-                    return ElevatedButton(
-                      onPressed: labourController.isLoading ? null : _registerProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2E5E25),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 3,
-                      ),
-                      child: labourController.isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.person_add, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text("Register Profile", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                    );
-                  },
+                ElevatedButton(
+                  onPressed: _isRegistering ? null : _registerProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E5E25),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 3,
+                  ),
+                  child: _isRegistering
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.person_add, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text("Register Profile", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                 ),
               ],
             ),
@@ -141,25 +136,35 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.person, color: const Color(0xFF2E5E25), size: 20),
-                const SizedBox(width: 8),
-                const Text("Personal Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(_nameController, 'Full Name', Icons.person, validator: (value) => value?.isEmpty == true ? 'Name is required' : null),
-            const SizedBox(height: 16),
-            _buildTextField(_phoneController, 'Phone Number', Icons.phone, keyboardType: TextInputType.phone, validator: (value) => value?.isEmpty == true ? 'Phone is required' : null),
-            const SizedBox(height: 16),
-            _buildTextField(_addressController, 'Address', Icons.location_on, maxLines: 2, validator: (value) => value?.isEmpty == true ? 'Address is required' : null),
-          ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF1F9F1), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.person, color: const Color(0xFF2E5E25), size: 20),
+                  const SizedBox(width: 8),
+                  const Text("Personal Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(_nameController, 'Full Name', Icons.person, validator: (value) => value?.isEmpty == true ? 'Name is required' : null),
+              const SizedBox(height: 16),
+              _buildTextField(_phoneController, 'Phone Number', Icons.phone, keyboardType: TextInputType.phone, validator: (value) => value?.isEmpty == true ? 'Phone is required' : null),
+              const SizedBox(height: 16),
+              _buildTextField(_addressController, 'Address', Icons.location_on, maxLines: 2, validator: (value) => value?.isEmpty == true ? 'Address is required' : null),
+            ],
+          ),
         ),
       ),
     );
@@ -169,42 +174,53 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.build, color: const Color(0xFF2E5E25), size: 20),
-                const SizedBox(width: 8),
-                const Text("Skills & Expertise", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _availableSkills.map((skill) {
-                final isSelected = _selectedSkills.contains(skill);
-                return FilterChip(
-                  label: Text(skill),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedSkills.add(skill);
-                      } else {
-                        _selectedSkills.remove(skill);
-                      }
-                    });
-                  },
-                  selectedColor: const Color(0xFF2E5E25).withOpacity(0.2),
-                  checkmarkColor: const Color(0xFF2E5E25),
-                );
-              }).toList(),
-            ),
-          ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF1F9F1), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.build, color: const Color(0xFF2E5E25), size: 20),
+                  const SizedBox(width: 8),
+                  const Text("Skills & Expertise", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _availableSkills.map((skill) {
+                  final isSelected = _selectedSkills.contains(skill);
+                  return FilterChip(
+                    label: Text(skill),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedSkills.add(skill);
+                        } else {
+                          _selectedSkills.remove(skill);
+                        }
+                      });
+                    },
+                    backgroundColor: Colors.white.withOpacity(0.7),
+                    selectedColor: const Color(0xFF2E5E25).withOpacity(0.2),
+                    checkmarkColor: const Color(0xFF2E5E25),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -214,54 +230,70 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.work, color: const Color(0xFF2E5E25), size: 20),
-                const SizedBox(width: 8),
-                const Text("Experience & Payment", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(_experienceController, 'Experience (e.g., 5 years)', Icons.work_history, validator: (value) => value?.isEmpty == true ? 'Experience is required' : null),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildTextField(_rateController, 'Rate (Rs)', Icons.money, keyboardType: TextInputType.number, validator: (value) => value?.isEmpty == true ? 'Rate is required' : null),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: DropdownButtonFormField<String>(
-                      value: _paymentType,
-                      decoration: const InputDecoration(
-                        labelText: 'Type',
-                        prefixIcon: Icon(Icons.payment, color: Color(0xFF2E5E25)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.all(16),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF1F9F1), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.work, color: const Color(0xFF2E5E25), size: 20),
+                  const SizedBox(width: 8),
+                  const Text("Experience & Payment", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(_experienceController, 'Experience (e.g., 5 years)', Icons.work_history, validator: (value) => value?.isEmpty == true ? 'Experience is required' : null),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _buildTextField(_rateController, 'Rate (Rs)', Icons.money, keyboardType: TextInputType.number, validator: (value) => value?.isEmpty == true ? 'Rate is required' : null),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
                       ),
-                      items: ['Daily', 'Hourly'].map((type) {
-                        return DropdownMenuItem(value: type, child: Text(type));
-                      }).toList(),
-                      onChanged: (value) => setState(() => _paymentType = value!),
+                      child: DropdownButtonFormField<String>(
+                        value: _paymentType,
+                        decoration: const InputDecoration(
+                          labelText: 'Type',
+                          labelStyle: TextStyle(color: Colors.grey),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(12),
+                        ),
+                        items: ['Per Day', 'Per Hour'].map((type) {
+                          return DropdownMenuItem(
+                            value: type, 
+                            child: Text(
+                              type, 
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) => setState(() => _paymentType = value!),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -271,42 +303,52 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.schedule, color: const Color(0xFF2E5E25), size: 20),
-                const SizedBox(width: 8),
-                const Text("Availability & Description", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[300]!),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF1F9F1), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.schedule, color: const Color(0xFF2E5E25), size: 20),
+                  const SizedBox(width: 8),
+                  const Text("Availability & Description", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E5E25))),
+                ],
               ),
-              child: DropdownButtonFormField<String>(
-                value: _availability,
-                decoration: const InputDecoration(
-                  labelText: 'Availability',
-                  prefixIcon: Icon(Icons.schedule, color: Color(0xFF2E5E25)),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(16),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey[300]!),
                 ),
-                items: ['Full Time', 'Part Time', 'Weekends Only', 'Flexible'].map((availability) {
-                  return DropdownMenuItem(value: availability, child: Text(availability));
-                }).toList(),
-                onChanged: (value) => setState(() => _availability = value!),
+                child: DropdownButtonFormField<String>(
+                  value: _availability,
+                  decoration: const InputDecoration(
+                    labelText: 'Availability',
+                    prefixIcon: Icon(Icons.schedule, color: Color(0xFF2E5E25)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(16),
+                  ),
+                  items: ['Full Time', 'Part Time', 'Weekends Only', 'Flexible'].map((availability) {
+                    return DropdownMenuItem(value: availability, child: Text(availability));
+                  }).toList(),
+                  onChanged: (value) => setState(() => _availability = value!),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(_descriptionController, 'Description (Optional)', Icons.description, maxLines: 3),
-          ],
+              const SizedBox(height: 16),
+              _buildTextField(_descriptionController, 'Description (Optional)', Icons.description, maxLines: 3),
+            ],
+          ),
         ),
       ),
     );
@@ -332,7 +374,7 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
           labelText: label,
           prefixIcon: Icon(icon, color: const Color(0xFF2E5E25)),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(16),
+          contentPadding: const EdgeInsets.all(12),
           labelStyle: TextStyle(color: Colors.grey[600]),
         ),
       ),
@@ -342,10 +384,14 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
   void _registerProfile() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedSkills.isEmpty) {
-      AppUtils.showSnackBar(context, 'Please select at least one skill', isError: true);
+      if (mounted) {
+        AppUtils.showSnackBar(context, 'Please select at least one skill', isError: true);
+      }
       return;
     }
 
+    setState(() => _isRegistering = true);
+    
     final labourController = Provider.of<LabourController>(context, listen: false);
     
     final success = await labourController.registerLabourProfile(
@@ -354,18 +400,21 @@ class _LabourRegistrationFormState extends State<LabourRegistrationForm> {
       address: _addressController.text.trim(),
       skills: _selectedSkills,
       experience: _experienceController.text.trim(),
-      dailyRate: _paymentType == 'Daily' ? (double.tryParse(_rateController.text) ?? 0) : 0,
-      hourlyRate: _paymentType == 'Hourly' ? (double.tryParse(_rateController.text) ?? 0) : 0,
+      dailyRate: _paymentType == 'Per Day' ? (double.tryParse(_rateController.text) ?? 0) : 0,
+      hourlyRate: _paymentType == 'Per Hour' ? (double.tryParse(_rateController.text) ?? 0) : 0,
       availability: _availability,
       description: _descriptionController.text.trim(),
     );
 
-    if (success) {
-      AppUtils.showSnackBar(context, 'Profile registered successfully!');
-      // Refresh the dashboard to show the profile
-      Provider.of<LabourController>(context, listen: false).loadLabourProfile();
-    } else {
-      AppUtils.showSnackBar(context, labourController.errorMessage ?? 'Registration failed', isError: true);
+    if (mounted) {
+      setState(() => _isRegistering = false);
+      
+      if (success) {
+        AppUtils.showSnackBar(context, 'Profile registered successfully!');
+        Provider.of<LabourController>(context, listen: false).loadLabourProfile();
+      } else {
+        AppUtils.showSnackBar(context, labourController.errorMessage ?? 'Registration failed', isError: true);
+      }
     }
   }
 

@@ -18,13 +18,21 @@ class LabourController extends ChangeNotifier {
   bool get isAvailable => _isAvailable;
 
   void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    if (_isLoading != loading) {
+      _isLoading = loading;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
   }
 
   void _setError(String? error) {
-    _errorMessage = error;
-    notifyListeners();
+    if (_errorMessage != error) {
+      _errorMessage = error;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    }
   }
 
   // Register/Update labour profile
@@ -85,6 +93,9 @@ class LabourController extends ChangeNotifier {
       
       final userId = await AuthService.getUserId();
       if (userId == null) return;
+
+      // Check for auto-completion first
+      await checkAutoCompletion();
 
       final doc = await _firestore.collection('labour_profiles').doc(userId).get();
       if (doc.exists) {
@@ -157,10 +168,34 @@ class LabourController extends ChangeNotifier {
         'respondedAt': FieldValue.serverTimestamp(),
       });
 
-      // If accepted, mark labourer as unavailable
+      // If accepted, mark labourer as unavailable and set auto-completion
       if (response == 'accepted') {
         final userId = await AuthService.getUserId();
         if (userId != null) {
+          // Get request data to calculate end time
+          final requestDoc = await _firestore.collection('hire_requests').doc(requestId).get();
+          final requestData = requestDoc.data();
+          
+          if (requestData != null) {
+            final quantity = requestData['quantity']?.toDouble() ?? 1;
+            final durationType = requestData['durationType'] ?? 'Days';
+            
+            // Calculate end time
+            final now = DateTime.now();
+            DateTime endTime;
+            
+            if (durationType == 'Days') {
+              endTime = now.add(Duration(days: quantity.toInt()));
+            } else { // Hours
+              endTime = now.add(Duration(hours: quantity.toInt()));
+            }
+            
+            await _firestore.collection('hire_requests').doc(requestId).update({
+              'acceptedAt': FieldValue.serverTimestamp(),
+              'autoCompleteAt': Timestamp.fromDate(endTime),
+            });
+          }
+          
           await _firestore.collection('labour_profiles').doc(userId).update({
             'isAvailable': false,
             'currentJobId': requestId,
@@ -194,14 +229,8 @@ class LabourController extends ChangeNotifier {
       
       double jobPayment = 0;
       if (requestData != null) {
-        final duration = requestData['duration'] ?? 1;
-        final paymentType = requestData['paymentType'] ?? 'daily';
-        
-        if (paymentType == 'daily') {
-          jobPayment = (_labourProfile?['dailyRate'] ?? 0) * duration;
-        } else {
-          jobPayment = (_labourProfile?['hourlyRate'] ?? 0) * duration;
-        }
+        // Use the totalAmount that was calculated and saved during hire request
+        jobPayment = requestData['totalAmount']?.toDouble() ?? 0;
       }
 
       // Update hire request status
@@ -267,7 +296,6 @@ class LabourController extends ChangeNotifier {
     yield* _firestore
         .collection('hire_requests')
         .where('labourId', isEqualTo: userId)
-        .orderBy('requestedAt', descending: true)
         .snapshots();
   }
 
@@ -287,7 +315,32 @@ class LabourController extends ChangeNotifier {
   // Check if profile exists
   bool get hasProfile => _labourProfile != null;
 
-  // Add delete profile method to LabourController
+  // Check and auto-complete expired jobs
+  Future<void> checkAutoCompletion() async {
+    try {
+      final userId = await AuthService.getUserId();
+      if (userId == null) return;
+      
+      final now = Timestamp.now();
+      
+      // Find accepted jobs that should be auto-completed
+      final expiredJobs = await _firestore
+          .collection('hire_requests')
+          .where('labourId', isEqualTo: userId)
+          .where('status', isEqualTo: 'accepted')
+          .where('autoCompleteAt', isLessThanOrEqualTo: now)
+          .get();
+      
+      // Auto-complete each expired job
+      for (var doc in expiredJobs.docs) {
+        await completeJob(doc.id);
+      }
+    } catch (e) {
+      // Silent fail for background check
+    }
+  }
+
+  // Delete profile and all related data
   Future<bool> deleteProfile() async {
     try {
       _setLoading(true);
@@ -296,8 +349,34 @@ class LabourController extends ChangeNotifier {
       final userId = await AuthService.getUserId();
       if (userId == null) throw Exception('User not logged in');
 
+      // Delete labour profile
       await _firestore.collection('labour_profiles').doc(userId).delete();
+      
+      // Delete all hire requests for this labour
+      final hireRequestsQuery = await _firestore
+          .collection('hire_requests')
+          .where('labourId', isEqualTo: userId)
+          .get();
+      
+      for (var doc in hireRequestsQuery.docs) {
+        await doc.reference.delete();
+      }
+      
+      // Delete all daily earnings records
+      final earningsQuery = await _firestore
+          .collection('labour_daily_earnings')
+          .where('userId', isEqualTo: userId)
+          .get();
+      
+      for (var doc in earningsQuery.docs) {
+        await doc.reference.delete();
+      }
+      
+      // Clear local data
       _labourProfile = null;
+      _hireRequests = [];
+      _isAvailable = true;
+      
       _setLoading(false);
       return true;
     } catch (e) {

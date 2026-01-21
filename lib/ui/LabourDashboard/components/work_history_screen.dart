@@ -93,6 +93,24 @@ class WorkHistoryScreen extends StatelessWidget {
                                       color: Colors.green,
                                     ),
                                   ),
+                                  if (jobData['rating'] != null) ...[
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.star, color: Colors.amber, size: 14),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          '${jobData['rating'].toStringAsFixed(1)}',
+                                          style: TextStyle(
+                                            color: Colors.amber[700],
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                   Text(
                                     _formatDate(jobData['completedAt']),
                                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
